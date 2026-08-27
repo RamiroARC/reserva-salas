@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Gestión de Local de Eventos">
+  <rect width="512" height="512" rx="108" fill="#1B5E4B"/>
+  <g transform="translate(256 256) scale(5.7) translate(-36 -24)">
+    <rect x="12" y="9" width="30" height="30" rx="6" fill="#F4F7F5"/>
+    <path d="M12 15h30v8H12z" fill="#C5A46A"/>
+    <rect x="18" y="6.5" width="4" height="8" rx="2" fill="#F4F7F5"/>
+    <rect x="32" y="6.5" width="4" height="8" rx="2" fill="#F4F7F5"/>
+    <circle cx="21" cy="29" r="2.2" fill="#1B5E4B"/>
+    <circle cx="27" cy="29" r="2.2" fill="#1B5E4B"/>
+    <circle cx="33" cy="29" r="2.2" fill="#1B5E4B"/>
+    <circle cx="21" cy="34.5" r="2.2" fill="#1B5E4B"/>
+    <circle cx="27" cy="34.5" r="2.2" fill="#1B5E4B"/>
+    <path
+      d="M50.5 16.5a8.5 8.5 0 0 1 5.3 15.2l3.4 3.4a1.6 1.6 0 1 1-2.3 2.3l-3.4-3.4A8.5 8.5 0 1 1 50.5 16.5zm0 4.2a4.3 4.3 0 1 0 0 8.6 4.3 4.3 0 0 0 0-8.6z"
+      fill="#F4F7F5"
+    />
+  </g>
+</svg>

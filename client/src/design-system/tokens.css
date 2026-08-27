@@ -1,0 +1,176 @@
+/* Material Design 3 tokens — seed #6750A4 (primary) + tertiary floral. */
+
+:root,
+[data-theme='light'] {
+  color-scheme: light;
+
+  --md-sys-color-primary: #6750a4;
+  --md-sys-color-on-primary: #ffffff;
+  --md-sys-color-primary-container: #eaddff;
+  --md-sys-color-on-primary-container: #21005d;
+
+  --md-sys-color-secondary: #625b71;
+  --md-sys-color-on-secondary: #ffffff;
+  --md-sys-color-secondary-container: #e8def8;
+  --md-sys-color-on-secondary-container: #1d192b;
+
+  --md-sys-color-tertiary: #7d5260;
+  --md-sys-color-on-tertiary: #ffffff;
+  --md-sys-color-tertiary-container: #ffd8e4;
+  --md-sys-color-on-tertiary-container: #31111d;
+
+  --md-sys-color-error: #ba1a1a;
+  --md-sys-color-on-error: #ffffff;
+  --md-sys-color-error-container: #ffdad6;
+  --md-sys-color-on-error-container: #410002;
+
+  --md-sys-color-background: #fffbfe;
+  --md-sys-color-on-background: #1c1b1f;
+  --md-sys-color-surface: #fffbfe;
+  --md-sys-color-on-surface: #1c1b1f;
+  --md-sys-color-surface-variant: #e7e0ec;
+  --md-sys-color-on-surface-variant: #49454f;
+  --md-sys-color-surface-dim: #ded8e1;
+  --md-sys-color-surface-bright: #fffbfe;
+  --md-sys-color-surface-container-lowest: #ffffff;
+  --md-sys-color-surface-container-low: #f7f2fa;
+  --md-sys-color-surface-container: #f3edf7;
+  --md-sys-color-surface-container-high: #ece6f0;
+  --md-sys-color-surface-container-highest: #e6e0e9;
+  --md-sys-color-inverse-surface: #313033;
+  --md-sys-color-inverse-on-surface: #f4eff4;
+  --md-sys-color-inverse-primary: #d0bcff;
+
+  --md-sys-color-outline: #79747e;
+  --md-sys-color-outline-variant: #cac4d0;
+  --md-sys-color-shadow: #000000;
+  --md-sys-color-scrim: #000000;
+
+  --md-status-available: #146c2e;
+  --md-status-available-container: #c4eed0;
+  --md-status-reserved: #006d3b;
+  --md-status-reserved-container: #92f7b5;
+  --md-status-cancelled: #ba1a1a;
+  --md-status-cancelled-container: #ffdad6;
+  --md-status-attended: #49454f;
+  --md-status-attended-container: #e7e0ec;
+  --md-status-pending: #7c5800;
+  --md-status-pending-container: #ffdf9e;
+
+  --md-sys-elevation-0: none;
+  --md-sys-elevation-1: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 3px 1px rgba(0, 0, 0, 0.15);
+  --md-sys-elevation-2: 0 1px 2px rgba(0, 0, 0, 0.3), 0 2px 6px 2px rgba(0, 0, 0, 0.15);
+  --md-sys-elevation-3: 0 4px 8px 3px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.3);
+
+  --bg: var(--md-sys-color-surface);
+  --surface: var(--md-sys-color-surface-container-lowest);
+  --surface-muted: var(--md-sys-color-surface-container);
+  --text: var(--md-sys-color-on-surface);
+  --text-muted: var(--md-sys-color-on-surface-variant);
+  --muted: var(--md-sys-color-on-surface-variant);
+  --primary: var(--md-sys-color-primary);
+  --primary-hover: var(--md-sys-color-primary);
+  --danger: var(--md-sys-color-error);
+  --danger-hover: var(--md-sys-color-error);
+  --border: var(--md-sys-color-outline-variant);
+  --success: var(--md-status-reserved);
+  --shadow: var(--md-sys-elevation-1);
+  --radius: 16px;
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  --md-sys-color-primary: #d0bcff;
+  --md-sys-color-on-primary: #381e72;
+  --md-sys-color-primary-container: #4f378b;
+  --md-sys-color-on-primary-container: #eaddff;
+
+  --md-sys-color-secondary: #ccc2dc;
+  --md-sys-color-on-secondary: #332d41;
+  --md-sys-color-secondary-container: #4a4458;
+  --md-sys-color-on-secondary-container: #e8def8;
+
+  --md-sys-color-tertiary: #efb8c8;
+  --md-sys-color-on-tertiary: #492532;
+  --md-sys-color-tertiary-container: #633b48;
+  --md-sys-color-on-tertiary-container: #ffd8e4;
+
+  --md-sys-color-error: #ffb4ab;
+  --md-sys-color-on-error: #690005;
+  --md-sys-color-error-container: #93000a;
+  --md-sys-color-on-error-container: #ffdad6;
+
+  --md-sys-color-background: #1c1b1f;
+  --md-sys-color-on-background: #e6e1e5;
+  --md-sys-color-surface: #1c1b1f;
+  --md-sys-color-on-surface: #e6e1e5;
+  --md-sys-color-surface-variant: #49454f;
+  --md-sys-color-on-surface-variant: #cac4d0;
+  --md-sys-color-surface-dim: #141218;
+  --md-sys-color-surface-bright: #3b383e;
+  --md-sys-color-surface-container-lowest: #0f0d13;
+  --md-sys-color-surface-container-low: #1d1b20;
+  --md-sys-color-surface-container: #211f26;
+  --md-sys-color-surface-container-high: #2b2930;
+  --md-sys-color-surface-container-highest: #36343b;
+  --md-sys-color-inverse-surface: #e6e1e5;
+  --md-sys-color-inverse-on-surface: #313033;
+  --md-sys-color-inverse-primary: #6750a4;
+
+  --md-sys-color-outline: #938f99;
+  --md-sys-color-outline-variant: #49454f;
+  --md-sys-color-shadow: #000000;
+  --md-sys-color-scrim: #000000;
+
+  --md-status-available: #89d99a;
+  --md-status-available-container: #0f5223;
+  --md-status-reserved: #76da9b;
+  --md-status-reserved-container: #00522c;
+  --md-status-cancelled: #ffb4ab;
+  --md-status-cancelled-container: #93000a;
+  --md-status-attended: #cac4d0;
+  --md-status-attended-container: #49454f;
+  --md-status-pending: #e9c349;
+  --md-status-pending-container: #5c4300;
+
+  --md-sys-elevation-1: 0 1px 3px 1px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --md-sys-elevation-2: 0 2px 6px 2px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --md-sys-elevation-3: 0 4px 8px 3px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+:root {
+  --md-sys-typescale-display-large: 400 57px/64px 'Roboto Flex', Roboto, system-ui, sans-serif;
+  --md-sys-typescale-headline-large: 400 32px/40px 'Roboto Flex', Roboto, system-ui, sans-serif;
+  --md-sys-typescale-headline-medium: 400 28px/36px 'Roboto Flex', Roboto, system-ui, sans-serif;
+  --md-sys-typescale-headline-small: 400 24px/32px 'Roboto Flex', Roboto, system-ui, sans-serif;
+  --md-sys-typescale-title-large: 400 22px/28px 'Roboto Flex', Roboto, system-ui, sans-serif;
+  --md-sys-typescale-title-medium: 500 16px/24px 'Roboto Flex', Roboto, system-ui, sans-serif;
+  --md-sys-typescale-title-small: 500 14px/20px 'Roboto Flex', Roboto, system-ui, sans-serif;
+  --md-sys-typescale-body-large: 400 16px/24px 'Roboto Flex', Roboto, system-ui, sans-serif;
+  --md-sys-typescale-body-medium: 400 14px/20px 'Roboto Flex', Roboto, system-ui, sans-serif;
+  --md-sys-typescale-body-small: 400 12px/16px 'Roboto Flex', Roboto, system-ui, sans-serif;
+  --md-sys-typescale-label-large: 500 14px/20px 'Roboto Flex', Roboto, system-ui, sans-serif;
+  --md-sys-typescale-label-medium: 500 12px/16px 'Roboto Flex', Roboto, system-ui, sans-serif;
+  --md-sys-typescale-label-small: 500 11px/16px 'Roboto Flex', Roboto, system-ui, sans-serif;
+
+  --md-sys-shape-corner-none: 0;
+  --md-sys-shape-corner-extra-small: 4px;
+  --md-sys-shape-corner-small: 8px;
+  --md-sys-shape-corner-medium: 12px;
+  --md-sys-shape-corner-large: 16px;
+  --md-sys-shape-corner-extra-large: 28px;
+  --md-sys-shape-corner-full: 999px;
+
+  --md-sys-space-1: 8px;
+  --md-sys-space-2: 16px;
+  --md-sys-space-3: 24px;
+  --md-sys-space-4: 32px;
+  --md-sys-space-5: 40px;
+  --md-sys-space-6: 48px;
+
+  --md-sys-motion-duration-short: 200ms;
+  --md-sys-motion-duration-medium: 300ms;
+  --md-sys-motion-easing-standard: cubic-bezier(0.2, 0, 0, 1);
+  --md-sys-motion-easing-emphasized: cubic-bezier(0.2, 0, 0, 1);
+}

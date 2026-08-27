@@ -1,0 +1,22 @@
+{
+  "name": "reserva-salas",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Demo de reserva de salas de reuniones empresariales",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
+    "install:all": "npm install && npm install --prefix server && npm install --prefix client",
+    "build": "npm run build --prefix client",
+    "test": "npm test --prefix server"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "mongodb": "^6.21.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "vercel": "^58.9.1"
+  }
+}
