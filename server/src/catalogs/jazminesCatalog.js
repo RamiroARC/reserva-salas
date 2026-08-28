@@ -2,6 +2,7 @@ import { C, insertDoc } from '../mongo.js';
 
 export const JAZMINES = {
   name: 'Los Jazmines',
+  ownerName: 'Jaime A. Brito Mallqui',
   ownerDni: '31760959',
   phones: ['943491997', '975199496'],
   year: 2026,

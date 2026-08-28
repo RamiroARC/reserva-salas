@@ -1148,6 +1148,217 @@
   gap: 6px;
 }
 
+.decoration-field--compact {
+  gap: 4px;
+}
+
+.decoration-field__package {
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.event-type-field {
+  display: grid;
+  gap: 6px;
+}
+
+.event-type-field__label {
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
+.event-type-field__row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.event-type-field__row select {
+  flex: 1;
+  min-width: 0;
+}
+
+.event-type-field__toggle {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.event-type-field__add {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.event-type-field__add input {
+  flex: 1;
+  min-width: 0;
+}
+
+.decoration-colors-panel {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--md-sys-color-surface-container-lowest);
+}
+
+.decoration-colors-panel__fan {
+  max-width: 280px;
+  margin: 0 auto;
+}
+
+.decoration-colors-panel__fan .decoration-fan {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.decoration-colors-panel__fan .decoration-fan__title {
+  font-size: 0.8rem;
+  margin-bottom: 4px;
+  text-align: center;
+}
+
+.decoration-colors-panel__fan .decoration-fan__labels {
+  justify-content: center;
+  gap: 4px 8px;
+  margin-top: 4px;
+}
+
+.decoration-colors-panel__fan .decoration-fan__label {
+  font-size: 0.7rem;
+}
+
+.decoration-colors-panel__fan .decoration-fan__hint {
+  font-size: 0.72rem;
+  text-align: center;
+  margin-top: 4px;
+}
+
+.decoration-colors-panel--confirmed {
+  padding-bottom: 12px;
+}
+
+.decoration-colors-panel__confirm,
+.decoration-colors-panel__change {
+  justify-self: start;
+}
+
+.decoration-colors-panel--confirmed .decoration-colors-panel__fan {
+  margin-bottom: 4px;
+}
+
+.decoration-colors-panel__done {
+  justify-self: start;
+}
+
+.decoration-color-chips {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
+  gap: 6px;
+  max-height: 168px;
+  overflow-y: auto;
+  list-style: none;
+  margin: 0;
+  padding: 2px;
+}
+
+.decoration-color-chips > li {
+  min-width: 0;
+}
+
+.booking-form .decoration-color-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 32px;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  font-size: 0.76rem;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.booking-form .decoration-color-chip--selected {
+  border-color: var(--md-sys-color-primary);
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.booking-form .decoration-color-chip input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.booking-form .decoration-color-chip__swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid rgba(15, 23, 42, 0.15);
+  flex-shrink: 0;
+}
+
+.booking-form .decoration-color-chip__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.decoration-colors-compact {
+  display: grid;
+  gap: 6px;
+}
+
+.decoration-colors-compact__done {
+  justify-self: start;
+}
+
+.decoration-colors-summary--compact {
+  margin-bottom: 0;
+  padding: 6px 10px;
+}
+
+.decoration-options--colors-compact {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+  gap: 6px;
+}
+
+.decoration-options--colors-compact > li {
+  width: auto;
+}
+
+.booking-form .decoration-options--colors-compact .decoration-option--color {
+  width: 100%;
+  min-height: 34px;
+  padding: 5px 8px;
+  gap: 6px;
+  font-size: 0.8rem;
+  border-radius: 8px;
+}
+
+.booking-form .decoration-options--colors-compact .decoration-option__swatch {
+  width: 14px;
+  height: 14px;
+}
+
+.booking-form .decoration-options--colors-compact .decoration-option__text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .decoration-field__label {
   font-weight: 600;
   font-size: 0.92rem;

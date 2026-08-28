@@ -10,6 +10,14 @@ export async function fetchEventTypes() {
   return request('/event-types', { fallbackError: 'No se pudieron cargar los tipos de evento' });
 }
 
+export async function createEventType(name) {
+  return request('/event-types', {
+    method: 'POST',
+    body: { name },
+    fallbackError: 'Error al crear tipo de evento',
+  });
+}
+
 export async function fetchPackages() {
   return request('/packages', { fallbackError: 'No se pudieron cargar los paquetes' });
 }

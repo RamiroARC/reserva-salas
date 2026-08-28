@@ -389,7 +389,7 @@ function buildJazminesBody(data, docType) {
   const brand = resolveBranding(data.local);
   const isPromoPackage = Boolean(isPromotional ?? data.packageType === 'promotional');
   const isQuote = docType === 'quote';
-  const docTitle = isQuote ? `COTIZACIÓN ${brand.year}` : `CONTRATO ${brand.year}`;
+  const docTitle = isQuote ? 'CONTRATO' : `CONTRATO ${brand.year}`;
   const bannerUrl = data.bannerUrl || brand.bannerUrl;
   const pricingNotes = isPromoPackage
     ? [

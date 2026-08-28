@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { combineDateAndTime, fetchQuote, formatCurrency, isoToTimeInput } from '../../api';
+import { combineDateAndTime, createEventType, fetchQuote, formatCurrency, isoToTimeInput } from '../../api';
 import {
-  getDecorationColorHex,
-  getDecorationColorLabel,
   parseDecorationColors,
   serializeDecorationColors,
 } from '../../constants/decorationColors';
@@ -58,6 +56,7 @@ export default function BookingForm({
   onAttachmentUpload,
   attachmentsReadOnly = false,
   attachmentsUploading = false,
+  onEventTypesChange,
 }) {
   const isEditing = Boolean(booking?.id);
   const readOnly = isBookingLocked(booking?.status);
@@ -104,6 +103,10 @@ export default function BookingForm({
   const [quoteError, setQuoteError] = useState('');
   const [quoting, setQuoting] = useState(false);
   const [documentPreview, setDocumentPreview] = useState(null);
+  const [newEventTypeName, setNewEventTypeName] = useState('');
+  const [addingEventType, setAddingEventType] = useState(false);
+  const [eventTypeError, setEventTypeError] = useState('');
+  const [showAddEventType, setShowAddEventType] = useState(false);
 
   useEffect(() => {
     if (!booking) return;
@@ -206,7 +209,7 @@ export default function BookingForm({
   };
 
   const hasSelectedDecorationColors = decorationColors.length > 0;
-  const showColorOptions = !hasSelectedDecorationColors || colorPickerExpanded;
+  const showColorPicker = !hasSelectedDecorationColors || colorPickerExpanded;
 
   const { type: packageType, id: selectedPackageId, name: selectedPromoName } =
     parsePackageSelection(packageSelection);
@@ -582,6 +585,25 @@ export default function BookingForm({
     );
   };
 
+  const handleAddEventType = async () => {
+    const name = newEventTypeName.trim();
+    if (!name || readOnly) return;
+
+    setAddingEventType(true);
+    setEventTypeError('');
+    try {
+      const created = await createEventType(name);
+      setEventType(created.name);
+      setNewEventTypeName('');
+      setShowAddEventType(false);
+      await onEventTypesChange?.();
+    } catch (err) {
+      setEventTypeError(err.message || 'No se pudo agregar el tipo de evento');
+    } finally {
+      setAddingEventType(false);
+    }
+  };
+
   const handlePrintQuote = () => {
     if (!quote || !venue || !selectedPackageName || !eventType) return;
 
@@ -641,7 +663,7 @@ export default function BookingForm({
       extrasTerms: contractExtraTerms,
     });
 
-    previewDocument(html, `Cotización Los Jazmines — ${eventType}`, setDocumentPreview);
+    previewDocument(html, `Contrato — ${eventType}`, setDocumentPreview);
   };
 
   const canPrintQuote =
@@ -767,21 +789,63 @@ export default function BookingForm({
 
       <form className="booking-form" onSubmit={handleSubmit}>
         <fieldset disabled={readOnly} className="booking-form__fields">
-        <label>
-          Tipo de evento
-          <select
-            value={eventType}
-            onChange={(e) => setEventType(e.target.value)}
-            required
-          >
-            <option value="">Selecciona el tipo de evento</option>
-            {eventTypes.map((type) => (
-              <option key={type.id} value={type.name}>
-                {type.name}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="event-type-field">
+          <span className="event-type-field__label">Tipo de evento</span>
+          <div className="event-type-field__row">
+            <select
+              value={eventType}
+              onChange={(e) => setEventType(e.target.value)}
+              required
+            >
+              <option value="">Selecciona el tipo de evento</option>
+              {eventTypes.map((type) => (
+                <option key={type.id} value={type.name}>
+                  {type.name}
+                </option>
+              ))}
+            </select>
+            {!readOnly && (
+              <button
+                type="button"
+                className="btn btn--ghost btn--sm event-type-field__toggle"
+                onClick={() => {
+                  setShowAddEventType((prev) => !prev);
+                  setEventTypeError('');
+                }}
+                aria-expanded={showAddEventType}
+                title="Agregar tipo de evento"
+              >
+                {showAddEventType ? 'Cerrar' : '+ Nuevo'}
+              </button>
+            )}
+          </div>
+          {showAddEventType && !readOnly && (
+            <div className="event-type-field__add">
+              <input
+                type="text"
+                value={newEventTypeName}
+                onChange={(e) => setNewEventTypeName(e.target.value)}
+                placeholder="Nombre del nuevo tipo"
+                maxLength={80}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAddEventType();
+                  }
+                }}
+              />
+              <button
+                type="button"
+                className="btn btn--secondary btn--sm"
+                onClick={handleAddEventType}
+                disabled={!newEventTypeName.trim() || addingEventType}
+              >
+                {addingEventType ? 'Agregando…' : 'Agregar'}
+              </button>
+            </div>
+          )}
+          {eventTypeError && <p className="form-hint form-hint--error">{eventTypeError}</p>}
+        </div>
 
         <label>
           Nombre / referencia del evento
@@ -1150,56 +1214,35 @@ export default function BookingForm({
           )}
         </div>
 
-        <div className="decoration-field">
+        <div className="decoration-field decoration-field--compact">
           <span className="decoration-field__label">Color de decoración del local</span>
 
-          {hasSelectedDecorationColors && !showColorOptions && (
-            <div className="decoration-colors-summary">
-              <div className="decoration-colors-summary__chips">
-                {decorationColors.map((colorValue) => (
-                  <span key={colorValue} className="decoration-colors-summary__chip">
-                    <span
-                      className="decoration-colors-summary__swatch"
-                      style={{
-                        backgroundColor: getDecorationColorHex(colorValue, decorationColorOptions),
-                      }}
-                      aria-hidden="true"
-                    />
-                    {getDecorationColorLabel(colorValue, decorationColorOptions)}
-                  </span>
-                ))}
-              </div>
-              {!readOnly && (
-                <button
-                  type="button"
-                  className="btn btn--ghost btn--sm decoration-colors-summary__toggle"
-                  onClick={() => setColorPickerExpanded(true)}
-                >
-                  Cambiar colores
-                </button>
-              )}
-            </div>
-          )}
-
           <div
-            className={`decoration-colors-layout${
-              showColorOptions ? '' : ' decoration-colors-layout--collapsed'
+            className={`decoration-colors-panel${
+              hasSelectedDecorationColors && !showColorPicker
+                ? ' decoration-colors-panel--confirmed'
+                : ''
             }`}
           >
-            {showColorOptions && (
-              <div className="decoration-colors-layout__options">
-                <p className="form-hint decoration-colors-layout__hint">
-                  Elige uno o más colores. La lista permanece abierta hasta que pulses Listo.
-                </p>
-                <ul className="decoration-options decoration-options--colors">
+            <div className="decoration-colors-panel__fan">
+              <DecorationColorFan
+                colors={decorationColors}
+                catalog={decorationColorOptions}
+              />
+            </div>
+
+            {showColorPicker ? (
+              <>
+                <ul className="decoration-color-chips" aria-label="Colores disponibles">
                   {decorationColorOptions.map((color) => {
                     const selected = decorationColors.includes(color.value);
                     return (
                       <li key={color.value}>
                         <label
-                          className={`decoration-option decoration-option--color${
-                            selected ? ' decoration-option--color-selected' : ''
+                          className={`decoration-color-chip${
+                            selected ? ' decoration-color-chip--selected' : ''
                           }`}
+                          title={color.label}
                         >
                           <input
                             type="checkbox"
@@ -1208,16 +1251,11 @@ export default function BookingForm({
                             disabled={readOnly}
                           />
                           <span
-                            className="decoration-option__swatch"
+                            className="decoration-color-chip__swatch"
                             style={{ backgroundColor: color.hex }}
                             aria-hidden="true"
                           />
-                          <span className="decoration-option__text">{color.label}</span>
-                          {selected && (
-                            <span className="decoration-option__check" aria-hidden="true">
-                              ✓
-                            </span>
-                          )}
+                          <span className="decoration-color-chip__label">{color.label}</span>
                         </label>
                       </li>
                     );
@@ -1226,27 +1264,28 @@ export default function BookingForm({
                 {hasSelectedDecorationColors && !readOnly && (
                   <button
                     type="button"
-                    className="btn btn--secondary decoration-colors-layout__done"
+                    className="btn btn--secondary btn--sm decoration-colors-panel__confirm"
                     onClick={() => setColorPickerExpanded(false)}
                   >
-                    Listo
-                    {decorationColors.length > 0
-                      ? ` (${decorationColors.length} color${decorationColors.length === 1 ? '' : 'es'})`
-                      : ''}
+                    Confirmar selección ({decorationColors.length})
                   </button>
                 )}
-              </div>
+              </>
+            ) : (
+              !readOnly && (
+                <button
+                  type="button"
+                  className="btn btn--ghost btn--sm decoration-colors-panel__change"
+                  onClick={() => setColorPickerExpanded(true)}
+                >
+                  Cambiar colores
+                </button>
+              )
             )}
-            <div className="decoration-colors-layout__fan">
-              <DecorationColorFan
-                colors={decorationColors}
-                catalog={decorationColorOptions}
-              />
-            </div>
           </div>
 
           {packageSelection && !isPromoPackage && decoracionPlates.length > 0 && (
-            <>
+            <div className="decoration-field__package">
               <span className="decoration-field__label">Decoración del local</span>
               <div className="decoration-options decoration-options--packages">
                 {decoracionPlates.map((plate) => (
@@ -1278,7 +1317,7 @@ export default function BookingForm({
                   />
                 </label>
               )}
-            </>
+            </div>
           )}
         </div>
 
@@ -1388,7 +1427,7 @@ export default function BookingForm({
             onClick={handlePrintQuote}
             disabled={!canPrintQuote || quoting}
           >
-            Imprimir cotización preliminar
+            Contrato preliminar
           </button>
           <button type="submit" className="btn btn--primary" disabled={loading || quoting}>
             {loading

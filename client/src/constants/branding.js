@@ -16,7 +16,7 @@ export function resolveBranding(local) {
   return {
     name: local?.name || JAZMINES.name,
     year: new Date().getFullYear(),
-    ownerName: local?.ownerName || local?.name || JAZMINES.name,
+    ownerName: local?.ownerName || JAZMINES.ownerName,
     ownerDni: local?.ownerDni || JAZMINES.ownerDni,
     phones: local?.phones?.length ? local.phones : JAZMINES.phones,
     packageIncludes: local?.packageIncludes?.length

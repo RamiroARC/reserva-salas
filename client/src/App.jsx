@@ -172,6 +172,12 @@ function Workspace() {
     setCalendarRefreshKey((key) => key + 1);
   }, [statusFilter, calendarDateFilter]);
 
+  const reloadEventTypes = useCallback(async () => {
+    const typesData = await fetchEventTypes();
+    setEventTypes(typesData);
+    return typesData;
+  }, []);
+
   const loadReportBookings = useCallback(async () => {
     if (reportDateFrom && reportDateTo && reportDateFrom > reportDateTo) {
       throw new Error('La fecha «desde» no puede ser posterior a la fecha «hasta».');
@@ -523,6 +529,7 @@ function Workspace() {
                   onAttachmentUpload={editingBooking?.id ? handleAttachmentUpload : undefined}
                   attachmentsReadOnly={isBookingLocked(editingBooking?.status)}
                   attachmentsUploading={attachmentsUploading}
+                  onEventTypesChange={reloadEventTypes}
                 />
               </div>
             </main>
