@@ -135,6 +135,35 @@ export async function deleteDecorationColor(id) {
   });
 }
 
+export async function fetchDecorationThemeOptions() {
+  return request('/decoration-theme-options', {
+    fallbackError: 'No se pudieron cargar los temas de biombo temático',
+  });
+}
+
+export async function createDecorationThemeOption(data) {
+  return request('/decoration-theme-options', {
+    method: 'POST',
+    body: data,
+    fallbackError: 'Error al crear tema de biombo',
+  });
+}
+
+export async function updateDecorationThemeOption(id, data) {
+  return request(`/decoration-theme-options/${id}`, {
+    method: 'PUT',
+    body: data,
+    fallbackError: 'Error al actualizar tema de biombo',
+  });
+}
+
+export async function deleteDecorationThemeOption(id) {
+  return request(`/decoration-theme-options/${id}`, {
+    method: 'DELETE',
+    fallbackError: 'Error al eliminar tema de biombo',
+  });
+}
+
 export async function fetchContractExtraTerms() {
   return request('/contract-extra-terms', {
     fallbackError: 'No se pudieron cargar las disposiciones extras',

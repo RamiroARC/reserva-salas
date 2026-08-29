@@ -11,6 +11,7 @@ import {
   fetchPromotionalPackages,
   fetchPromotionalOptionalItems,
   fetchDecorationColors,
+  fetchDecorationThemeOptions,
   fetchContractExtraTerms,
   fetchProjections,
   fetchSeasons,
@@ -115,6 +116,7 @@ function Workspace() {
   const [promotionalPackages, setPromotionalPackages] = useState([]);
   const [promotionalOptionalItems, setPromotionalOptionalItems] = useState([]);
   const [decorationColorCatalog, setDecorationColorCatalog] = useState([]);
+  const [decorationThemeOptions, setDecorationThemeOptions] = useState([]);
   const [contractExtraTerms, setContractExtraTerms] = useState([]);
   const [seasons, setSeasons] = useState([]);
   const [bookings, setBookings] = useState([]);
@@ -142,6 +144,7 @@ function Workspace() {
       promoPackagesData,
       promoOptionalData,
       decorationColorsData,
+      decorationThemesData,
       contractExtraTermsData,
       bookingsData,
     ] = await Promise.all([
@@ -152,6 +155,7 @@ function Workspace() {
       fetchPromotionalPackages(),
       fetchPromotionalOptionalItems(),
       fetchDecorationColors(),
+      fetchDecorationThemeOptions().catch(() => []),
       fetchContractExtraTerms().catch(() => []),
       fetchBookings({
         status: statusFilter || undefined,
@@ -167,6 +171,7 @@ function Workspace() {
     setPromotionalPackages(promoPackagesData);
     setPromotionalOptionalItems(promoOptionalData);
     setDecorationColorCatalog(buildDecorationColorCatalog(decorationColorsData));
+    setDecorationThemeOptions(decorationThemesData);
     setContractExtraTerms(contractExtraTermsData);
     setBookings(bookingsData);
     setCalendarRefreshKey((key) => key + 1);
@@ -217,6 +222,10 @@ function Workspace() {
     setDecorationColorCatalog(buildDecorationColorCatalog(rows));
   }, []);
 
+  const loadDecorationThemeOptions = useCallback(async () => {
+    setDecorationThemeOptions(await fetchDecorationThemeOptions());
+  }, []);
+
   const loadContractExtraTerms = useCallback(async () => {
     setContractExtraTerms(await fetchContractExtraTerms());
   }, []);
@@ -254,10 +263,15 @@ function Workspace() {
       } else if (activeTab === 'utilitarios') {
         await Promise.all([loadDecorationColors(), loadContractExtraTerms()]);
       } else if (activeTab === 'paquetes') {
-        const [packagesData, seasonsData] = await Promise.all([fetchPackages(), fetchSeasons()]);
+        const [packagesData, seasonsData, themesData] = await Promise.all([
+          fetchPackages(),
+          fetchSeasons(),
+          fetchDecorationThemeOptions().catch(() => []),
+        ]);
 
         setPackages(packagesData);
         setSeasons(seasonsData);
+        setDecorationThemeOptions(themesData);
       } else {
         await loadBookingsData();
       }
@@ -519,6 +533,7 @@ function Workspace() {
                   promotionalPackages={promotionalPackages}
                   promotionalOptionalItems={promotionalOptionalItems}
                   decorationColorOptions={decorationColorCatalog}
+                  decorationThemeOptions={decorationThemeOptions}
                   contractExtraTerms={contractExtraTerms}
                   selectedDate={formDate}
                   booking={editingBooking}
@@ -597,7 +612,13 @@ function Workspace() {
           onDateToChange={setReportDateTo}
         />
       ) : activeTab === 'paquetes' ? (
-        <PackageManager packages={packages} seasons={seasons} onRefresh={loadData} />
+        <PackageManager
+          packages={packages}
+          seasons={seasons}
+          decorationThemeOptions={decorationThemeOptions}
+          onRefresh={loadData}
+          onRefreshThemes={loadDecorationThemeOptions}
+        />
       ) : activeTab === 'paquetes-promo' ? (
         <PromotionalPackagesManager
           packages={promotionalPackages}

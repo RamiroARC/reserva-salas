@@ -162,6 +162,7 @@ export async function ensureIndexes() {
   await db.collection('decoration_colors').createIndex({ local_id: 1, name: 1 }, { unique: true });
   await db.collection('contract_extra_terms').createIndex({ local_id: 1 });
   await db.collection('promotional_plato_fondo').createIndex({ promotional_package_id: 1 });
+  await db.collection('decoration_theme_options').createIndex({ local_id: 1 });
 }
 
 export async function deleteLocalCascade(localId, options = {}) {
@@ -186,6 +187,7 @@ export async function deleteLocalCascade(localId, options = {}) {
   await C('promotional_packages').deleteMany({ local_id: id }, options);
   await C('promotional_optional_items').deleteMany({ local_id: id }, options);
   await C('decoration_colors').deleteMany({ local_id: id }, options);
+  await C('decoration_theme_options').deleteMany({ local_id: id }, options);
   await C('contract_extra_terms').deleteMany({ local_id: id }, options);
 
   const bookings = await C('bookings').find({ room_id: id }, options).toArray();

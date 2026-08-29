@@ -81,6 +81,9 @@ function serializeDecorationItems(items = []) {
     name: item.name,
     price: item.price ?? item.price_per_plate ?? 0,
     description: item.description ?? '',
+    ...(item.themeId != null
+      ? { themeId: item.themeId, themeName: item.themeName ?? '' }
+      : {}),
   }));
   return JSON.stringify(normalized);
 }
@@ -248,6 +251,7 @@ router.post(
       decorationPrice,
       promotionalExtraIds,
       promotionalPlatoFondoId,
+      decorationThemeId,
     } = req.body;
 
     if (!roomId || !attendees || (!packageId && !promotionalPackageId && !promotionalPackageName?.trim())) {
@@ -274,6 +278,7 @@ router.post(
       decorationPrice,
       promotionalExtraIds,
       promotionalPlatoFondoId,
+      decorationThemeId,
     });
     if (costs.error) return res.status(400).json({ error: costs.error });
 
@@ -319,6 +324,7 @@ router.post(
       decorationPrice,
       promotionalExtraIds,
       promotionalPlatoFondoId,
+      decorationThemeId,
       paymentMethod,
       operationNumber,
     } = req.body;
@@ -365,6 +371,7 @@ router.post(
       decorationPrice,
       promotionalExtraIds,
       promotionalPlatoFondoId,
+      decorationThemeId,
     });
 
     if (costs.error) return res.status(400).json({ error: costs.error });
@@ -434,6 +441,7 @@ router.post(
             guarantee_amount: Number(guaranteeAmount) || 0,
             decoration_color: decorationSerialized,
             decoration_items: decorationItemsSerialized,
+            decoration_theme_id: costs.decorationThemeId ?? null,
             client_dni: clientDni?.trim() ?? '',
             discount_percent: costs.discountPercent,
             increment_percent: costs.incrementPercent,
@@ -518,6 +526,7 @@ router.put(
       decorationPrice,
       promotionalExtraIds,
       promotionalPlatoFondoId,
+      decorationThemeId,
     } = req.body;
 
     const existing = await findById('bookings', req.params.id);
@@ -571,6 +580,7 @@ router.put(
       decorationPrice,
       promotionalExtraIds,
       promotionalPlatoFondoId,
+      decorationThemeId,
     });
 
     if (costs.error) return res.status(400).json({ error: costs.error });
@@ -645,6 +655,7 @@ router.put(
               guarantee_amount: Number(guaranteeAmount) || 0,
               decoration_color: decorationSerialized,
               decoration_items: decorationItemsSerialized,
+              decoration_theme_id: costs.decorationThemeId ?? null,
               client_dni: clientDni?.trim() ?? '',
               discount_percent: costs.discountPercent,
               increment_percent: costs.incrementPercent,

@@ -265,8 +265,13 @@ function renderDecorationPackage(decorationColor, decorationItems = []) {
       const priceStr =
         item.price > 0 ? `<span class="price">${formatSoles(item.price)}</span>` : '';
       const description = catalog?.description ? `: ${catalog.description}` : '';
+      const themeSuffix = item.themeName
+        ? item.themeUnitPrice > 0
+          ? ` — Tema: ${item.themeName} (${formatSoles(item.themeUnitPrice)}/unidad)`
+          : ` — Tema: ${item.themeName}`
+        : '';
 
-      return `<div class="menu-item selected">► ${item.name}${description}${colorSuffix}${priceStr}</div>`;
+      return `<div class="menu-item selected">► ${item.name}${description}${themeSuffix}${colorSuffix}${priceStr}</div>`;
     })
     .join('');
 

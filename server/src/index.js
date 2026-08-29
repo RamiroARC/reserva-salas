@@ -14,6 +14,7 @@ import promotionalOptionalItemsRouter from './routes/promotionalOptionalItems.js
 import decorationColorsRouter from './routes/decorationColors.js';
 import contractExtraTermsRouter from './routes/contractExtraTerms.js';
 import promotionalPlatoFondoRouter from './routes/promotionalPlatoFondo.js';
+import decorationThemeOptionsRouter from './routes/decorationThemeOptions.js';
 import projectionsRouter from './routes/projections.js';
 import attachmentsRouter from './routes/attachments.js';
 import companyLogosRouter from './routes/companyLogos.js';
@@ -79,6 +80,7 @@ app.use('/api/promotional-optional-items', tenantScoped, promotionalOptionalItem
 app.use('/api/decoration-colors', tenantScoped, decorationColorsRouter);
 app.use('/api/contract-extra-terms', tenantScoped, contractExtraTermsRouter);
 app.use('/api/promotional-plato-fondo', tenantScoped, promotionalPlatoFondoRouter);
+app.use('/api/decoration-theme-options', tenantScoped, decorationThemeOptionsRouter);
 app.use('/api/projections', tenantScoped, projectionsRouter);
 
 app.use((_req, res) => {

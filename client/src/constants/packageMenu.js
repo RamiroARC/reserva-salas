@@ -1,4 +1,5 @@
 export const PLATO_FONDO_CATEGORY = 'plato_fondo';
+export const BIOMBO_TEMATICO_NAME = 'Biombo temático';
 
 export const PACKAGE_MENU_SECTIONS = [
   { category: PLATO_FONDO_CATEGORY, label: 'Plato de fondo', required: true, perPerson: true },
@@ -41,6 +42,10 @@ export function isPlatoFondoIncludeText(text) {
   return text.trim().toLowerCase().startsWith('plato de fondo');
 }
 
+export function isBiomboTematicoName(name) {
+  return String(name ?? '').trim().toLowerCase() === BIOMBO_TEMATICO_NAME.toLowerCase();
+}
+
 export function formatPlateOptionLabel(plate) {
   if (plate.category === 'bebida' && Number(plate.price_per_plate) > 0) {
     return `${plate.name} — S/. ${Number(plate.price_per_plate).toFixed(2)}/persona`;
@@ -52,4 +57,15 @@ export function formatPlateOptionLabel(plate) {
     return `${plate.name} — S/. ${Number(plate.price_per_plate).toFixed(2)}/persona`;
   }
   return plate.name;
+}
+
+export function formatThemeOptionLabel(theme) {
+  const price = Number(theme.price) || 0;
+  if (theme.description) {
+    return `${theme.name} — ${theme.description}`;
+  }
+  if (price > 0) {
+    return `${theme.name} — S/. ${price.toFixed(2)}/unidad`;
+  }
+  return theme.name;
 }

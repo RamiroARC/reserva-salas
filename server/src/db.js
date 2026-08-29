@@ -1,5 +1,6 @@
 import { JAZMINES } from './catalogs/jazminesCatalog.js';
 import { VENUE } from './catalogs/venue.js';
+import { seedDecorationThemeOptions } from './catalogs/decorationThemeOptionsCatalog.js';
 import { seedLocalCatalogs } from './services/localSeed.js';
 import { hashPassword } from './services/password.js';
 import {
@@ -123,6 +124,17 @@ async function bootstrapUsers(defaultCompanyId) {
   console.warn('[auth] Admin de empresa creado: usuario "admin" con contraseña "admin123".');
 }
 
+async function seedExistingLocalThemeOptions() {
+  const rooms = await C('rooms').find({}).toArray();
+  for (const room of rooms) {
+    await seedDecorationThemeOptions(room._id);
+  }
+  await C('decoration_theme_options').updateMany(
+    { price: { $exists: false } },
+    { $set: { price: 0 } }
+  );
+}
+
 let initialized;
 
 export async function initDb() {
@@ -132,6 +144,7 @@ export async function initDb() {
     await dbHandle();
     await ensureIndexes();
     const companyId = await bootstrapEmptyDatabase();
+    await seedExistingLocalThemeOptions();
     await bootstrapUsers(companyId);
     await C('companies').updateMany(
       {
