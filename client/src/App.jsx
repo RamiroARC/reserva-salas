@@ -603,7 +603,7 @@ function Workspace() {
         <PackageManager
           packages={packages}
           seasons={seasons}
-          onRefresh={loadData}
+          onPackagesChange={setPackages}
         />
       ) : activeTab === 'paquetes-promo' ? (
         <PromotionalPackagesManager

@@ -28,6 +28,30 @@ function sectionKey(packageId, category) {
   return `${packageId}:${category}`;
 }
 
+function patchPlateInPackages(packages, plate) {
+  return packages.map((pkg) => {
+    if (pkg.id !== plate.package_id) return pkg;
+    const exists = pkg.plates.some((item) => item.id === plate.id);
+    const plates = exists
+      ? pkg.plates.map((item) => (item.id === plate.id ? plate : item))
+      : [...pkg.plates, plate];
+    return { ...pkg, plates };
+  });
+}
+
+function removePlateFromPackages(packages, plateId, packageId) {
+  return packages.map((pkg) => {
+    if (pkg.id !== packageId) return pkg;
+    return { ...pkg, plates: pkg.plates.filter((item) => item.id !== plateId) };
+  });
+}
+
+function patchPackageRental(packages, packageId, rentalPrice) {
+  return packages.map((pkg) =>
+    pkg.id === packageId ? { ...pkg, rental_price: rentalPrice } : pkg
+  );
+}
+
 function formatPlatePrice(plate, suffix, category, section = {}) {
   if (section.freeformPrice || isBebidaOtrasCategory(category)) {
     return plate.description || 'Precio según reserva';
@@ -95,7 +119,7 @@ function IconChevron({ open }) {
 export default function PackageManager({
   packages,
   seasons,
-  onRefresh,
+  onPackagesChange,
 }) {
   const [expandedPackages, setExpandedPackages] = useState(() => new Set());
   const [expandedSections, setExpandedSections] = useState(() => new Set());
@@ -138,7 +162,14 @@ export default function PackageManager({
   const startAdd = (packageId, category) => {
     setEditingId(null);
     setExpandedPackages((prev) => new Set(prev).add(packageId));
-    setExpandedSections((prev) => new Set(prev).add(sectionKey(packageId, category)));
+    setExpandedSections((prev) => {
+      const next = new Set(prev);
+      next.add(sectionKey(packageId, category));
+      if (isBebidaCategory(category)) {
+        next.add(sectionKey(packageId, BEBIDA_MANAGER_GROUP.id));
+      }
+      return next;
+    });
     setAddingKey(sectionKey(packageId, category));
     setNewItem(emptyItemForm);
   };
@@ -148,13 +179,13 @@ export default function PackageManager({
 
     setSaving(true);
     try {
-      await updatePlate(plateId, {
+      const updated = await updatePlate(plateId, {
         name: editForm.name.trim(),
         description: editForm.description.trim(),
         pricePerPlate: section.hidePrice ? 0 : Number(editForm.price) || 0,
       });
+      onPackagesChange((current) => patchPlateInPackages(current, updated));
       setEditingId(null);
-      await onRefresh();
     } finally {
       setSaving(false);
     }
@@ -167,7 +198,9 @@ export default function PackageManager({
     try {
       await deletePlate(plate.id);
       if (editingId === plate.id) setEditingId(null);
-      await onRefresh();
+      onPackagesChange((current) =>
+        removePlateFromPackages(current, plate.id, plate.package_id)
+      );
     } finally {
       setSaving(false);
     }
@@ -178,16 +211,16 @@ export default function PackageManager({
 
     setSaving(true);
     try {
-      await createPlate({
+      const created = await createPlate({
         packageId,
         category,
         name: newItem.name.trim(),
         description: newItem.description.trim(),
         pricePerPlate: section.hidePrice ? 0 : Number(newItem.price) || 0,
       });
+      onPackagesChange((current) => patchPlateInPackages(current, created));
       setAddingKey(null);
       setNewItem(emptyItemForm);
-      await onRefresh();
     } finally {
       setSaving(false);
     }
@@ -204,9 +237,9 @@ export default function PackageManager({
 
     setSaving(true);
     try {
-      await updatePackage(packageId, { rentalPrice: price });
+      const updated = await updatePackage(packageId, { rentalPrice: price });
+      onPackagesChange((current) => patchPackageRental(current, packageId, updated.rental_price));
       setEditingRentalPackageId(null);
-      await onRefresh();
     } finally {
       setSaving(false);
     }
