@@ -1,14 +1,47 @@
-import { BEBIDA_CATEGORIES, HELADO_CATEGORY, POSTRE_CATEGORY, isBebidaCategory } from './menuCategories';
+import {
+  BEBIDA_CATEGORIES,
+  BEBIDA_CORTESIA_CATEGORY,
+  BEBIDA_OTRAS_CATEGORY,
+  BEBIDA_PACK_CATEGORY,
+  HELADO_CATEGORY,
+  POSTRE_CATEGORY,
+  isBebidaCategory,
+  isBebidaOtrasCategory,
+  isBebidaPackCategory,
+} from './menuCategories';
 
 export const PLATO_FONDO_CATEGORY = 'plato_fondo';
 export const BIOMBO_TEMATICO_NAME = 'Biombo temático';
 
+export const BEBIDA_MANAGER_GROUP = {
+  id: 'bebidas',
+  label: 'Bebidas',
+  sections: [
+    {
+      category: BEBIDA_CORTESIA_CATEGORY,
+      label: 'Bebidas de Cortesía',
+      priceSuffix: '',
+      hidePrice: true,
+    },
+    {
+      category: BEBIDA_PACK_CATEGORY,
+      label: 'Pack de bebidas',
+      priceSuffix: '/persona',
+      perPerson: true,
+    },
+    {
+      category: BEBIDA_OTRAS_CATEGORY,
+      label: 'Otras Bebidas',
+      priceSuffix: '',
+      hidePrice: true,
+      freeformPrice: true,
+    },
+  ],
+};
+
 export const PACKAGE_MANAGER_SECTIONS = [
   { category: PLATO_FONDO_CATEGORY, label: 'Platos de fondo', priceSuffix: '/persona' },
   { category: 'entrada', label: 'Entradas', priceSuffix: '/persona' },
-  { category: 'bebida_cortesia', label: 'Bebidas de Cortesía', priceSuffix: '/persona' },
-  { category: 'bebida_pack', label: 'Pack de bebidas', priceSuffix: '/persona' },
-  { category: 'bebida_otras', label: 'Otras Bebidas', priceSuffix: '/persona' },
   { category: POSTRE_CATEGORY, label: 'Postres', priceSuffix: '/persona' },
   { category: HELADO_CATEGORY, label: 'Helados', priceSuffix: '/persona' },
 ];
@@ -16,9 +49,11 @@ export const PACKAGE_MANAGER_SECTIONS = [
 export const PACKAGE_MENU_SECTIONS = [
   { category: PLATO_FONDO_CATEGORY, label: 'Plato de fondo', required: true, perPerson: true },
   { category: 'entrada', label: 'Entrada', required: false, perPerson: true },
-  { category: 'bebida_cortesia', label: 'Bebidas de Cortesía', required: false, perPerson: true },
-  { category: 'bebida_pack', label: 'Pack de bebidas', required: false, perPerson: true },
-  { category: 'bebida_otras', label: 'Otras Bebidas', required: false, perPerson: true },
+  ...BEBIDA_MANAGER_GROUP.sections.map((section) => ({
+    ...section,
+    required: false,
+    perPerson: Boolean(section.perPerson),
+  })),
   { category: POSTRE_CATEGORY, label: 'Postres', required: false, perPerson: true },
   { category: HELADO_CATEGORY, label: 'Helados', required: false, perPerson: true },
 ];
@@ -29,7 +64,8 @@ export const PRICE_PRIMARY_CATEGORIES = [
   'entrada',
   POSTRE_CATEGORY,
   HELADO_CATEGORY,
-  ...BEBIDA_CATEGORIES,
+  BEBIDA_PACK_CATEGORY,
+  BEBIDA_CORTESIA_CATEGORY,
 ];
 
 export function parseDecorationItems(raw) {
@@ -71,6 +107,13 @@ export function isBiomboTematicoName(name) {
 }
 
 export function formatPlateOptionLabel(plate) {
+  if (isBebidaOtrasCategory(plate.category)) {
+    if (plate.description) return `${plate.name} — ${plate.description}`;
+    return plate.name;
+  }
+  if (isBebidaPackCategory(plate.category) && Number(plate.price_per_plate) > 0) {
+    return `${plate.name} — S/. ${Number(plate.price_per_plate).toFixed(2)}/persona`;
+  }
   if (isBebidaCategory(plate.category) && Number(plate.price_per_plate) > 0) {
     return `${plate.name} — S/. ${Number(plate.price_per_plate).toFixed(2)}/persona`;
   }
@@ -82,3 +125,10 @@ export function formatPlateOptionLabel(plate) {
   }
   return plate.name;
 }
+
+export {
+  isBebidaCategory,
+  isBebidaOtrasCategory,
+  isBebidaPackCategory,
+  BEBIDA_CATEGORIES,
+};

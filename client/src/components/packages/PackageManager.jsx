@@ -6,8 +6,13 @@ import {
   updatePackage,
   updatePlate,
 } from '../../api';
-import { isPlatoFondoCategory, PACKAGE_MANAGER_SECTIONS, PRICE_PRIMARY_CATEGORIES } from '../../constants/packageMenu';
-import { isBebidaCategory } from '../../constants/menuCategories';
+import {
+  isPlatoFondoCategory,
+  BEBIDA_MANAGER_GROUP,
+  PACKAGE_MANAGER_SECTIONS,
+  PRICE_PRIMARY_CATEGORIES,
+} from '../../constants/packageMenu';
+import { isBebidaCategory, isBebidaOtrasCategory } from '../../constants/menuCategories';
 
 const DECORATION_SECTION = {
   category: 'decoracion',
@@ -23,12 +28,19 @@ function sectionKey(packageId, category) {
   return `${packageId}:${category}`;
 }
 
-function formatPlatePrice(plate, suffix, category) {
+function formatPlatePrice(plate, suffix, category, section = {}) {
+  if (section.freeformPrice || isBebidaOtrasCategory(category)) {
+    return plate.description || 'Precio según reserva';
+  }
+
   const pricePrimary = PRICE_PRIMARY_CATEGORIES.includes(category);
 
   if (pricePrimary) {
     if (isBebidaCategory(category) && !plate.price_per_plate && plate.description) {
       return plate.description;
+    }
+    if (section.hidePrice && !plate.price_per_plate) {
+      return plate.description || 'Incluido / oferta';
     }
     return `${formatCurrency(plate.price_per_plate ?? 0)}${suffix}`;
   }
@@ -131,7 +143,7 @@ export default function PackageManager({
     setNewItem(emptyItemForm);
   };
 
-  const savePlate = async (plateId) => {
+  const savePlate = async (plateId, section = {}) => {
     if (!editForm.name.trim()) return;
 
     setSaving(true);
@@ -139,7 +151,7 @@ export default function PackageManager({
       await updatePlate(plateId, {
         name: editForm.name.trim(),
         description: editForm.description.trim(),
-        pricePerPlate: Number(editForm.price) || 0,
+        pricePerPlate: section.hidePrice ? 0 : Number(editForm.price) || 0,
       });
       setEditingId(null);
       await onRefresh();
@@ -161,7 +173,7 @@ export default function PackageManager({
     }
   };
 
-  const saveNewItem = async (packageId, category) => {
+  const saveNewItem = async (packageId, category, section = {}) => {
     if (!newItem.name.trim()) return;
 
     setSaving(true);
@@ -171,7 +183,7 @@ export default function PackageManager({
         category,
         name: newItem.name.trim(),
         description: newItem.description.trim(),
-        pricePerPlate: Number(newItem.price) || 0,
+        pricePerPlate: section.hidePrice ? 0 : Number(newItem.price) || 0,
       });
       setAddingKey(null);
       setNewItem(emptyItemForm);
@@ -200,7 +212,7 @@ export default function PackageManager({
     }
   };
 
-  const renderItemForm = (form, setForm, onSave, onCancel, saveDisabled) => (
+  const renderItemForm = (form, setForm, onSave, onCancel, saveDisabled, section = {}) => (
     <div className="plate-add">
       <input
         type="text"
@@ -212,18 +224,20 @@ export default function PackageManager({
       <input
         type="text"
         name="plate-description"
-        placeholder="Descripción"
+        placeholder={section.freeformPrice ? 'Referencia de precios (unidad / caja)' : 'Descripción'}
         value={form.description}
         onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
       />
-      <input
-        type="number"
-        min="0"
-        step="0.01"
-        placeholder="Precio"
-        value={form.price}
-        onChange={(e) => setForm((prev) => ({ ...prev, price: e.target.value }))}
-      />
+      {!section.hidePrice ? (
+        <input
+          type="number"
+          min="0"
+          step="0.01"
+          placeholder="Precio"
+          value={form.price}
+          onChange={(e) => setForm((prev) => ({ ...prev, price: e.target.value }))}
+        />
+      ) : null}
       <button
         type="button"
         className="btn btn--secondary btn--sm"
@@ -242,7 +256,7 @@ export default function PackageManager({
   const decoracionPlates =
     decoracionPackage?.plates?.filter((plate) => plate.category === 'decoracion') ?? [];
 
-  const renderMenuSection = (packageId, section, plates) => {
+  const renderMenuSection = (packageId, section, plates, { nested = false } = {}) => {
     const addKey = sectionKey(packageId, section.category);
     const isAdding = addingKey === addKey;
     const isSectionExpanded = expandedSections.has(addKey);
@@ -254,7 +268,7 @@ export default function PackageManager({
         key={`${packageId}-${section.category}`}
         className={`plate-list ${isSectionExpanded ? '' : 'plate-list--collapsed'}${
           isPlatoFondoSection ? ' plate-list--plato-fondo' : ''
-        }`}
+        }${nested ? ' plate-list--nested' : ''}`}
       >
         <div className="plate-list__header">
           <button
@@ -294,9 +308,10 @@ export default function PackageManager({
                   {renderItemForm(
                     editForm,
                     setEditForm,
-                    () => savePlate(plate.id),
+                    () => savePlate(plate.id, section),
                     () => setEditingId(null),
-                    !editForm.name.trim()
+                    !editForm.name.trim(),
+                    section
                   )}
                 </div>
               ) : (
@@ -312,7 +327,7 @@ export default function PackageManager({
                   </div>
                   <div className="plate-row__actions">
                     <span className="plate-price plate-price--static">
-                      {formatPlatePrice(plate, section.priceSuffix, section.category)}
+                      {formatPlatePrice(plate, section.priceSuffix, section.category, section)}
                     </span>
                     <button
                       type="button"
@@ -343,10 +358,46 @@ export default function PackageManager({
               renderItemForm(
                 newItem,
                 setNewItem,
-                () => saveNewItem(packageId, section.category),
+                () => saveNewItem(packageId, section.category, section),
                 () => setAddingKey(null),
-                !newItem.name.trim()
+                !newItem.name.trim(),
+                section
               )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderBebidaGroup = (packageId, pkg) => {
+    const groupKey = sectionKey(packageId, BEBIDA_MANAGER_GROUP.id);
+    const isGroupExpanded = expandedSections.has(groupKey);
+    const bebidaPlates = pkg.plates.filter((plate) => isBebidaCategory(plate.category));
+
+    return (
+      <div
+        key={`${packageId}-${BEBIDA_MANAGER_GROUP.id}`}
+        className={`plate-list plate-list--group ${isGroupExpanded ? '' : 'plate-list--collapsed'}`}
+      >
+        <div className="plate-list__header">
+          <button
+            type="button"
+            className="plate-list__toggle"
+            onClick={() => toggleSection(groupKey)}
+            aria-expanded={isGroupExpanded}
+          >
+            <IconChevron open={isGroupExpanded} />
+            <h4>{BEBIDA_MANAGER_GROUP.label}</h4>
+            <span className="plate-list__count">{bebidaPlates.length}</span>
+          </button>
+        </div>
+
+        {isGroupExpanded && (
+          <div className="plate-list__group-body">
+            {BEBIDA_MANAGER_GROUP.sections.map((section) => {
+              const plates = pkg.plates.filter((plate) => plate.category === section.category);
+              return renderMenuSection(packageId, section, plates, { nested: true });
+            })}
           </div>
         )}
       </div>
@@ -470,6 +521,8 @@ export default function PackageManager({
 
                 return renderMenuSection(pkg.id, section, plates);
               })}
+
+              {pkg.includes_food ? renderBebidaGroup(pkg.id, pkg) : null}
               </div>
               )}
             </article>

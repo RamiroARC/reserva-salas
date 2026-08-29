@@ -71,8 +71,13 @@ async function migrateHeladoBookings() {
   }
 }
 
+async function migrateBebidaOtrasPrices() {
+  await C('menu_plates').updateMany({ category: 'bebida_otras' }, { $set: { price_per_plate: 0 } });
+}
+
 export async function migrateMenuPlateCategories() {
   await migrateHeladoPlates();
   await migrateBebidaPlates();
+  await migrateBebidaOtrasPrices();
   await migrateHeladoBookings();
 }

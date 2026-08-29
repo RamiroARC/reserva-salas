@@ -31,6 +31,8 @@ export async function hydrateBooking(doc) {
       trimName(booking.menu_plate_name) || menuPlate?.name || promoPlato?.name || '',
     menu_entrada_name: trimName(booking.menu_entrada_name) || entrada?.name || '',
     menu_bebida_name: trimName(booking.menu_bebida_name) || bebida?.name || '',
+    menu_bebida_detail: trimName(booking.menu_bebida_detail) || '',
+    menu_bebida_category: bebida?.category ?? null,
     menu_postre_name: trimName(booking.menu_postre_name) || postre?.name || '',
     menu_helado_name: trimName(booking.menu_helado_name) || helado?.name || '',
     menu_plate_price: menuPlate?.price_per_plate ?? null,

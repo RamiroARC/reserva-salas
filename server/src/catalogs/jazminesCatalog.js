@@ -154,12 +154,13 @@ export async function seedLocalPackages(localId, localName = 'Local') {
 
   for (const group of ['bebidas_cortesia', 'bebidas_pack', 'bebidas_otras']) {
     for (const item of MENU_CATALOG[group] ?? []) {
+      const category = inferBebidaCategory(item);
       await insertDoc('menu_plates', {
         package_id: pkgBanquete.lastInsertRowid,
         name: item.name,
         description: buildPlateDescription(item),
-        price_per_plate: item.price ?? 0,
-        category: inferBebidaCategory(item),
+        price_per_plate: category === 'bebida_otras' ? 0 : item.price ?? 0,
+        category,
       });
     }
   }

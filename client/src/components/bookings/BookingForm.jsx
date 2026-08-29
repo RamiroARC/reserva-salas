@@ -5,8 +5,13 @@ import {
   serializeDecorationColors,
 } from '../../constants/decorationColors';
 import { isBookingLocked } from '../../constants/bookingStatus';
-import { PACKAGE_MENU_SECTIONS, formatPlateOptionLabel, getDecoracionPlates, parseDecorationItems } from '../../constants/packageMenu';
-import { getBookingExtraKey } from '../../constants/menuCategories';
+import { BEBIDA_MANAGER_GROUP, PACKAGE_MENU_SECTIONS, formatPlateOptionLabel, getDecoracionPlates, parseDecorationItems } from '../../constants/packageMenu';
+import {
+  getBookingExtraKey,
+  isBebidaCategory,
+  isBebidaOtrasCategory,
+  isBebidaPackCategory,
+} from '../../constants/menuCategories';
 import { PAYMENT_METHODS } from '../../constants/paymentTypes';
 import { isPlatoFondoIncludeText, parsePromotionalExtras } from '../../constants/promotionalPackages';
 import { buildQuoteDocument, previewDocument } from '../../utils/printDocuments';
@@ -90,6 +95,7 @@ export default function BookingForm({
   const [unitPrice, setUnitPrice] = useState('');
   const [entradaPrice, setEntradaPrice] = useState('');
   const [bebidaPrice, setBebidaPrice] = useState('');
+  const [bebidaDetail, setBebidaDetail] = useState('');
   const [postrePrice, setPostrePrice] = useState('');
   const [heladoPrice, setHeladoPrice] = useState('');
   const [decorationPrice, setDecorationPrice] = useState('');
@@ -193,6 +199,7 @@ export default function BookingForm({
       booking.menu_entrada_id ? String(booking.menu_entrada_price ?? '') : ''
     );
     setBebidaPrice(booking.menu_bebida_id ? String(booking.menu_bebida_price ?? '') : '');
+    setBebidaDetail(booking.menu_bebida_detail ?? '');
     prevEntradaIdRef.current = booking.menu_entrada_id ? String(booking.menu_entrada_id) : '';
     prevBebidaIdRef.current = booking.menu_bebida_id ? String(booking.menu_bebida_id) : '';
     prevPostreIdRef.current = booking.menu_postre_id && !legacyHeladoInPostre
@@ -280,6 +287,12 @@ export default function BookingForm({
   const optionalMenuSections = PACKAGE_MENU_SECTIONS.filter(
     (section) => section.category !== 'plato_fondo'
   );
+  const optionalNonBebidaSections = optionalMenuSections.filter(
+    (section) => !isBebidaCategory(section.category)
+  );
+  const bebidaMenuSections = BEBIDA_MANAGER_GROUP.sections;
+  const selectedBebidaPlate =
+    selectedPackage?.plates?.find((plate) => plate.id === Number(bebidaId)) ?? null;
 
   const menuExtraState = {
     entrada: { id: entradaId, setId: setEntradaId, price: entradaPrice, setPrice: setEntradaPrice },
@@ -360,6 +373,8 @@ export default function BookingForm({
           entradaPrice: isPromoPackage ? undefined : entradaId ? Number(entradaPrice) || 0 : undefined,
           bebidaId: isPromoPackage ? undefined : bebidaId ? Number(bebidaId) : undefined,
           bebidaPrice: isPromoPackage ? undefined : bebidaId ? Number(bebidaPrice) || 0 : undefined,
+          bebidaDetail:
+            isPromoPackage || !bebidaId ? undefined : bebidaDetail.trim() || undefined,
           postreId: isPromoPackage ? undefined : postreId ? Number(postreId) : undefined,
           postrePrice: isPromoPackage ? undefined : postreId ? Number(postrePrice) || 0 : undefined,
           heladoId: isPromoPackage ? undefined : heladoId ? Number(heladoId) : undefined,
@@ -411,6 +426,7 @@ export default function BookingForm({
     entradaPrice,
     bebidaId,
     bebidaPrice,
+    bebidaDetail,
     postreId,
     postrePrice,
     heladoId,
@@ -438,6 +454,7 @@ export default function BookingForm({
       setHeladoId('');
       setEntradaPrice('');
       setBebidaPrice('');
+      setBebidaDetail('');
       setPostrePrice('');
       setHeladoPrice('');
       setSelectedDecorationName('');
@@ -464,6 +481,7 @@ export default function BookingForm({
       setHeladoId('');
       setEntradaPrice('');
       setBebidaPrice('');
+      setBebidaDetail('');
       setPostrePrice('');
       setHeladoPrice('');
       const defaultRental =
@@ -508,12 +526,23 @@ export default function BookingForm({
   useEffect(() => {
     if (!bebidaId) {
       setBebidaPrice('');
+      setBebidaDetail('');
       prevBebidaIdRef.current = '';
       return;
     }
     if (prevBebidaIdRef.current === bebidaId) return;
     const plate = selectedPackage?.plates?.find((p) => p.id === Number(bebidaId));
-    if (plate) setBebidaPrice(String(plate.price_per_plate));
+    if (!plate) return;
+
+    if (isBebidaOtrasCategory(plate.category)) {
+      setBebidaPrice('');
+    } else if (isBebidaPackCategory(plate.category)) {
+      setBebidaPrice(String(plate.price_per_plate ?? ''));
+      setBebidaDetail('');
+    } else {
+      setBebidaPrice(String(plate.price_per_plate ?? 0));
+      setBebidaDetail('');
+    }
     prevBebidaIdRef.current = bebidaId;
   }, [bebidaId, selectedPackage]);
 
@@ -625,9 +654,20 @@ export default function BookingForm({
             {quote.extras?.bebida && (
               <div className="cost-summary__row">
                 <span>
-                  Bebida: {quote.extras.bebida.name} (
-                  {formatCurrency(quote.extras.bebida.unitPrice ?? quote.extras.bebida.price)} ×{' '}
-                  {quote.extras.bebida.attendees ?? attendees})
+                  Bebida: {quote.extras.bebida.name}
+                  {quote.extras.bebida.detail ? ` — ${quote.extras.bebida.detail}` : ''}
+                  {quote.extras.bebida.pricingMode === 'fixed_total' ? (
+                    <> ({formatCurrency(quote.extras.bebida.price)})</>
+                  ) : quote.extras.bebida.pricingMode === 'included' &&
+                    (quote.extras.bebida.unitPrice ?? 0) <= 0 ? (
+                    <> (Cortesía)</>
+                  ) : (
+                    <>
+                      {' '}
+                      ({formatCurrency(quote.extras.bebida.unitPrice ?? quote.extras.bebida.price)}{' '}
+                      × {quote.extras.bebida.attendees ?? attendees})
+                    </>
+                  )}
                 </span>
                 <span>{formatCurrency(quote.extras.bebida.price)}</span>
               </div>
@@ -732,6 +772,8 @@ export default function BookingForm({
         : Number(entradaPrice) || quote.extras?.entrada?.unitPrice || 0,
       menuBebidaName: selectedPackage?.plates?.find((p) => p.id === Number(bebidaId))?.name,
       menuBebidaPrice: Number(bebidaPrice) || quote.extras?.bebida?.unitPrice || 0,
+      menuBebidaDetail: bebidaDetail.trim(),
+      menuBebidaPricingMode: quote.extras?.bebida?.pricingMode ?? null,
       menuBebidaDescription: selectedPackage?.plates?.find((p) => p.id === Number(bebidaId))
         ?.description,
       menuPostreName: selectedPackage?.plates?.find((p) => p.id === Number(postreId))?.name,
@@ -805,6 +847,8 @@ export default function BookingForm({
       entradaPrice: isPromoPackage ? undefined : entradaId ? Number(entradaPrice) || 0 : undefined,
       bebidaId: isPromoPackage ? undefined : bebidaId ? Number(bebidaId) : undefined,
       bebidaPrice: isPromoPackage ? undefined : bebidaId ? Number(bebidaPrice) || 0 : undefined,
+      bebidaDetail:
+        isPromoPackage || !bebidaId ? undefined : bebidaDetail.trim() || undefined,
       postreId: isPromoPackage ? undefined : postreId ? Number(postreId) : undefined,
       postrePrice: isPromoPackage ? undefined : postreId ? Number(postrePrice) || 0 : undefined,
       heladoId: isPromoPackage ? undefined : heladoId ? Number(heladoId) : undefined,
@@ -843,6 +887,7 @@ export default function BookingForm({
     setHeladoId('');
     setEntradaPrice('');
     setBebidaPrice('');
+    setBebidaDetail('');
     setPostrePrice('');
     setHeladoPrice('');
     setUnitPrice('');
@@ -1208,7 +1253,7 @@ export default function BookingForm({
               </label>
             </div>
 
-            {optionalMenuSections.map((section) => {
+            {optionalNonBebidaSections.map((section) => {
               const options =
                 selectedPackage?.plates?.filter(
                   (plate) => plate.category === section.category
@@ -1261,6 +1306,102 @@ export default function BookingForm({
                 </div>
               );
             })}
+
+            {bebidaMenuSections.some(
+              (section) =>
+                selectedPackage?.plates?.some((plate) => plate.category === section.category)
+            ) && (
+              <div className="booking-form__menu-group">
+                <span className="booking-form__menu-group-label">{BEBIDA_MANAGER_GROUP.label}</span>
+
+                {bebidaMenuSections.map((section) => {
+                  const options =
+                    selectedPackage?.plates?.filter(
+                      (plate) => plate.category === section.category
+                    ) ?? [];
+
+                  if (!options.length) return null;
+
+                  const value =
+                    selectedBebidaPlate?.category === section.category ? bebidaId : '';
+
+                  return (
+                    <div
+                      key={section.category}
+                      className={`booking-form__menu-row${
+                        value ? '' : ' booking-form__menu-row--single'
+                      } booking-form__menu-row--nested`}
+                    >
+                      <label className="booking-form__menu-row-main">
+                        <span className="booking-form__menu-row-label">{section.label}</span>
+                        <select
+                          value={value}
+                          onChange={(e) => {
+                            setBebidaId(e.target.value);
+                            if (!e.target.value) {
+                              setBebidaDetail('');
+                              setBebidaPrice('');
+                            }
+                          }}
+                        >
+                          <option value="">Sin selección</option>
+                          {options.map((plate) => (
+                            <option key={plate.id} value={plate.id}>
+                              {formatPlateOptionLabel(plate)}
+                            </option>
+                          ))}
+                        </select>
+                        {value && isBebidaPackCategory(section.category) ? (
+                          <span className="form-hint form-hint--inline">
+                            Total pack:{' '}
+                            {formatCurrency((Number(bebidaPrice) || 0) * Number(attendees))} (
+                            {attendees} asistentes)
+                          </span>
+                        ) : null}
+                      </label>
+                      {value && isBebidaPackCategory(section.category) ? (
+                        <label className="booking-form__menu-row-price">
+                          Costo por persona (S/.)
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={bebidaPrice}
+                            onChange={(e) => setBebidaPrice(e.target.value)}
+                          />
+                        </label>
+                      ) : null}
+                    </div>
+                  );
+                })}
+
+                {selectedBebidaPlate && isBebidaOtrasCategory(selectedBebidaPlate.category) && (
+                  <div className="booking-form__menu-group-extra">
+                    <label className="decoration-detail-field">
+                      Detalle de la bebida
+                      <textarea
+                        rows={2}
+                        value={bebidaDetail}
+                        onChange={(e) => setBebidaDetail(e.target.value)}
+                        placeholder="Ej.: 3 cajas Pilsen × S/. 98, 2 corchos"
+                        disabled={readOnly}
+                      />
+                    </label>
+                    <label className="booking-form__menu-row-price">
+                      Importe total (S/.)
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={bebidaPrice}
+                        onChange={(e) => setBebidaPrice(e.target.value)}
+                        disabled={readOnly}
+                      />
+                    </label>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 

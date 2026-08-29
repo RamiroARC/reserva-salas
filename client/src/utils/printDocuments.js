@@ -232,6 +232,12 @@ function formatMenuItemPrice(name, price, description, attendees, perPerson = fa
   return '';
 }
 
+function inferBebidaPricingMode(category, price) {
+  if (category === 'bebida_otras') return 'fixed_total';
+  if (category === 'bebida_pack') return 'per_person';
+  return Number(price) > 0 ? 'per_person' : 'included';
+}
+
 function isHeladoItem(name) {
   return /helado/i.test(String(name ?? ''));
 }
@@ -285,6 +291,8 @@ function renderContractMenuDetails(data) {
     menuBebidaName,
     menuBebidaPrice,
     menuBebidaDescription,
+    menuBebidaDetail,
+    menuBebidaPricingMode,
     menuPostreName,
     menuPostrePrice,
     menuHeladoName,
@@ -328,17 +336,30 @@ function renderContractMenuDetails(data) {
   }
 
   if (menuBebidaName?.trim()) {
+    const detailText = menuBebidaDetail?.trim();
+    const displayName = detailText
+      ? `${menuBebidaName.trim()}: "${detailText}"`
+      : menuBebidaName.trim();
+    const isFixedTotal = menuBebidaPricingMode === 'fixed_total';
+    const isIncluded =
+      menuBebidaPricingMode === 'included' && !(Number(menuBebidaPrice) > 0);
+
     sections.push(
       renderContractItemLine(
         'Bebidas:',
-        menuBebidaName,
-        formatMenuItemPrice(
-          menuBebidaName,
-          menuBebidaPrice,
-          menuBebidaPrice > 0 ? null : menuBebidaDescription,
-          attendees,
-          true
-        )
+        displayName,
+        isIncluded
+          ? ''
+          : isFixedTotal
+            ? formatSoles(menuBebidaPrice)
+            : formatMenuItemPrice(
+                menuBebidaName,
+                menuBebidaPrice,
+                menuBebidaPrice > 0 ? null : menuBebidaDescription,
+                attendees,
+                true
+              ),
+        { complimentary: isIncluded }
       )
     );
   }
@@ -447,6 +468,8 @@ function buildJazminesBody(data, docType) {
     menuBebidaName,
     menuBebidaPrice,
     menuBebidaDescription,
+    menuBebidaDetail,
+    menuBebidaPricingMode,
     menuPostreName,
     menuPostrePrice,
     menuHeladoName,
@@ -511,6 +534,8 @@ function buildJazminesBody(data, docType) {
     menuBebidaName,
     menuBebidaPrice,
     menuBebidaDescription,
+    menuBebidaDetail,
+    menuBebidaPricingMode,
     menuPostreName,
     menuPostrePrice,
     menuHeladoName,
@@ -650,6 +675,8 @@ export function buildContractDocument(data) {
       menuBebidaName: data.menuBebidaName,
       menuBebidaPrice: data.menuBebidaPrice,
       menuBebidaDescription: data.menuBebidaDescription,
+      menuBebidaDetail: data.menuBebidaDetail,
+      menuBebidaPricingMode: data.menuBebidaPricingMode,
       menuPostreName: data.menuPostreName,
       menuPostrePrice: data.menuPostrePrice,
       menuHeladoName: data.menuHeladoName,
@@ -735,6 +762,10 @@ export function mapBookingToContractData(detail) {
     menuBebidaName: isPromotional ? '' : detail.menu_bebida_name?.trim() || '',
     menuBebidaPrice: isPromotional ? 0 : detail.menu_bebida_price || 0,
     menuBebidaDescription: isPromotional ? undefined : detail.menu_bebida_description,
+    menuBebidaDetail: isPromotional ? '' : detail.menu_bebida_detail?.trim() || '',
+    menuBebidaPricingMode: isPromotional
+      ? null
+      : inferBebidaPricingMode(detail.menu_bebida_category, detail.menu_bebida_price),
     menuPostreName,
     menuPostrePrice,
     menuHeladoName,

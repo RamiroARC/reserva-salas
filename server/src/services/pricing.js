@@ -1,5 +1,9 @@
 import { C, fromDoc, fromDocs, nid } from '../mongo.js';
-import { BEBIDA_CATEGORIES } from '../catalogs/menuCategories.js';
+import {
+  BEBIDA_CATEGORIES,
+  BEBIDA_OTRAS_CATEGORY,
+  BEBIDA_PACK_CATEGORY,
+} from '../catalogs/menuCategories.js';
 import { parsePromoIncludes } from '../catalogs/promotionalPackages.js';
 import {
   listPromotionalPlatoFondo,
@@ -94,6 +98,79 @@ async function resolveOptionalExtra(packageId, plateId, categories, customPrice,
     unitPrice: roundedUnit,
     price: Math.round(roundedUnit * guestCount * 100) / 100,
     attendees: guestCount,
+    category: plate.category,
+  };
+}
+
+async function resolveBebidaExtra(packageId, bebidaId, bebidaPrice, bebidaDetail, guestCount) {
+  if (!bebidaId) return null;
+
+  const plate = fromDoc(
+    await C('menu_plates').findOne({
+      _id: nid(bebidaId),
+      package_id: nid(packageId),
+      category: { $in: BEBIDA_CATEGORIES },
+    })
+  );
+
+  if (!plate) return null;
+
+  if (plate.category === BEBIDA_OTRAS_CATEGORY) {
+    const total =
+      bebidaPrice != null && bebidaPrice !== '' ? Number(bebidaPrice) : 0;
+    if (Number.isNaN(total) || total < 0) {
+      return { error: 'El importe de la bebida no es válido' };
+    }
+
+    const roundedTotal = Math.round(total * 100) / 100;
+    return {
+      id: plate.id,
+      name: plate.name,
+      unitPrice: roundedTotal,
+      price: roundedTotal,
+      pricingMode: 'fixed_total',
+      detail: String(bebidaDetail ?? '').trim(),
+      category: plate.category,
+    };
+  }
+
+  if (plate.category === BEBIDA_PACK_CATEGORY) {
+    let unitPrice = plate.price_per_plate;
+    if (bebidaPrice != null && bebidaPrice !== '') {
+      unitPrice = Number(bebidaPrice);
+      if (Number.isNaN(unitPrice) || unitPrice < 0) {
+        return { error: 'El costo del pack de bebidas no es válido' };
+      }
+    }
+
+    const roundedUnit = Math.round(unitPrice * 100) / 100;
+    return {
+      id: plate.id,
+      name: plate.name,
+      unitPrice: roundedUnit,
+      price: Math.round(roundedUnit * guestCount * 100) / 100,
+      attendees: guestCount,
+      pricingMode: 'per_person',
+      category: plate.category,
+    };
+  }
+
+  let unitPrice = plate.price_per_plate ?? 0;
+  if (bebidaPrice != null && bebidaPrice !== '') {
+    unitPrice = Number(bebidaPrice);
+    if (Number.isNaN(unitPrice) || unitPrice < 0) {
+      return { error: 'El costo de la bebida no es válido' };
+    }
+  }
+
+  const roundedUnit = Math.round(unitPrice * 100) / 100;
+  return {
+    id: plate.id,
+    name: plate.name,
+    unitPrice: roundedUnit,
+    price: Math.round(roundedUnit * guestCount * 100) / 100,
+    attendees: guestCount,
+    pricingMode: 'included',
     category: plate.category,
   };
 }
@@ -423,6 +500,7 @@ export async function calculateBookingCosts(
     entradaPrice,
     bebidaId,
     bebidaPrice,
+    bebidaDetail,
     postreId,
     postrePrice,
     heladoId,
@@ -527,11 +605,11 @@ export async function calculateBookingCosts(
 
   const entrada = await resolveOptionalExtra(packageId, entradaId, 'entrada', entradaPrice, guestCount);
   if (entrada?.error) return entrada;
-  const bebida = await resolveOptionalExtra(
+  const bebida = await resolveBebidaExtra(
     packageId,
     bebidaId,
-    BEBIDA_CATEGORIES,
     bebidaPrice,
+    bebidaDetail,
     guestCount
   );
   if (bebida?.error) return bebida;
