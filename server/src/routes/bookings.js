@@ -56,6 +56,11 @@ function menuExtrasFromCosts(costs) {
       name: costs.extras?.postre?.name ?? '',
       price: extraStoredPrice(costs.extras?.postre),
     },
+    helado: {
+      id: costs.extras?.helado?.id ?? null,
+      name: costs.extras?.helado?.name ?? '',
+      price: extraStoredPrice(costs.extras?.helado),
+    },
   };
 }
 
@@ -81,9 +86,7 @@ function serializeDecorationItems(items = []) {
     name: item.name,
     price: item.price ?? item.price_per_plate ?? 0,
     description: item.description ?? '',
-    ...(item.themeId != null
-      ? { themeId: item.themeId, themeName: item.themeName ?? '' }
-      : {}),
+    ...(item.detail ? { detail: item.detail } : {}),
   }));
   return JSON.stringify(normalized);
 }
@@ -247,11 +250,13 @@ router.post(
       bebidaPrice,
       postreId,
       postrePrice,
+      heladoId,
+      heladoPrice,
       decorationIds,
       decorationPrice,
       promotionalExtraIds,
       promotionalPlatoFondoId,
-      decorationThemeId,
+      decorationDetail,
     } = req.body;
 
     if (!roomId || !attendees || (!packageId && !promotionalPackageId && !promotionalPackageName?.trim())) {
@@ -274,11 +279,13 @@ router.post(
       bebidaPrice,
       postreId,
       postrePrice,
+      heladoId,
+      heladoPrice,
       decorationIds,
       decorationPrice,
       promotionalExtraIds,
       promotionalPlatoFondoId,
-      decorationThemeId,
+      decorationDetail,
     });
     if (costs.error) return res.status(400).json({ error: costs.error });
 
@@ -317,14 +324,16 @@ router.post(
       entradaId,
       bebidaId,
       postreId,
+      heladoId,
       decorationIds,
       entradaPrice,
       bebidaPrice,
       postrePrice,
+      heladoPrice,
       decorationPrice,
       promotionalExtraIds,
       promotionalPlatoFondoId,
-      decorationThemeId,
+      decorationDetail,
       paymentMethod,
       operationNumber,
     } = req.body;
@@ -367,11 +376,13 @@ router.post(
       bebidaPrice,
       postreId,
       postrePrice,
+      heladoId,
+      heladoPrice,
       decorationIds,
       decorationPrice,
       promotionalExtraIds,
       promotionalPlatoFondoId,
-      decorationThemeId,
+      decorationDetail,
     });
 
     if (costs.error) return res.status(400).json({ error: costs.error });
@@ -441,7 +452,6 @@ router.post(
             guarantee_amount: Number(guaranteeAmount) || 0,
             decoration_color: decorationSerialized,
             decoration_items: decorationItemsSerialized,
-            decoration_theme_id: costs.decorationThemeId ?? null,
             client_dni: clientDni?.trim() ?? '',
             discount_percent: costs.discountPercent,
             increment_percent: costs.incrementPercent,
@@ -454,6 +464,9 @@ router.post(
             menu_postre_id: menuExtras.postre.id,
             menu_postre_name: menuExtras.postre.name,
             menu_postre_price: menuExtras.postre.price,
+            menu_helado_id: menuExtras.helado.id,
+            menu_helado_name: menuExtras.helado.name,
+            menu_helado_price: menuExtras.helado.price,
             attachments: '[]',
             created_at: nowIso(),
           },
@@ -519,14 +532,16 @@ router.put(
       entradaId,
       bebidaId,
       postreId,
+      heladoId,
       decorationIds,
       entradaPrice,
       bebidaPrice,
       postrePrice,
+      heladoPrice,
       decorationPrice,
       promotionalExtraIds,
       promotionalPlatoFondoId,
-      decorationThemeId,
+      decorationDetail,
     } = req.body;
 
     const existing = await findById('bookings', req.params.id);
@@ -576,11 +591,13 @@ router.put(
       bebidaPrice,
       postreId,
       postrePrice,
+      heladoId,
+      heladoPrice,
       decorationIds,
       decorationPrice,
       promotionalExtraIds,
       promotionalPlatoFondoId,
-      decorationThemeId,
+      decorationDetail,
     });
 
     if (costs.error) return res.status(400).json({ error: costs.error });
@@ -655,7 +672,6 @@ router.put(
               guarantee_amount: Number(guaranteeAmount) || 0,
               decoration_color: decorationSerialized,
               decoration_items: decorationItemsSerialized,
-              decoration_theme_id: costs.decorationThemeId ?? null,
               client_dni: clientDni?.trim() ?? '',
               discount_percent: costs.discountPercent,
               increment_percent: costs.incrementPercent,
@@ -668,6 +684,9 @@ router.put(
               menu_postre_id: menuExtras.postre.id,
               menu_postre_name: menuExtras.postre.name,
               menu_postre_price: menuExtras.postre.price,
+              menu_helado_id: menuExtras.helado.id,
+              menu_helado_name: menuExtras.helado.name,
+              menu_helado_price: menuExtras.helado.price,
             },
           },
           { session }

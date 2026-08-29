@@ -1,15 +1,11 @@
 import { C, fromDoc, fromDocs, nid } from '../mongo.js';
+import { BEBIDA_CATEGORIES } from '../catalogs/menuCategories.js';
 import { parsePromoIncludes } from '../catalogs/promotionalPackages.js';
 import {
   listPromotionalPlatoFondo,
   promoHasPlatoFondoOptions,
   resolvePromotionalPlatoFondo,
 } from '../catalogs/promotionalPlatoFondoCatalog.js';
-import {
-  isBiomboTematicoName,
-  localHasDecorationThemeOptions,
-  resolveDecorationTheme,
-} from '../catalogs/decorationThemeOptionsCatalog.js';
 
 export function isMonthInSeason(month, monthStart, monthEnd) {
   if (monthStart <= monthEnd) {
@@ -68,14 +64,16 @@ async function resolveMenuPlate(packageId, plateId, category) {
   );
 }
 
-async function resolveOptionalExtra(packageId, plateId, category, customPrice, guestCount) {
+async function resolveOptionalExtra(packageId, plateId, categories, customPrice, guestCount) {
   if (!plateId) return null;
+
+  const categoryList = Array.isArray(categories) ? categories : [categories];
 
   const plate = fromDoc(
     await C('menu_plates').findOne({
       _id: nid(plateId),
       package_id: nid(packageId),
-      category,
+      category: { $in: categoryList },
     })
   );
 
@@ -85,7 +83,7 @@ async function resolveOptionalExtra(packageId, plateId, category, customPrice, g
   if (customPrice != null && customPrice !== '') {
     unitPrice = Number(customPrice);
     if (Number.isNaN(unitPrice) || unitPrice < 0) {
-      return { error: `El costo de ${category} no es válido` };
+      return { error: 'El costo del ítem de menú no es válido' };
     }
   }
 
@@ -104,7 +102,7 @@ async function resolveDecorationItems(
   decorationIds = [],
   customPrice,
   localId,
-  decorationThemeId = null
+  decorationDetail = ''
 ) {
   if (!decorationIds?.length) return [];
 
@@ -129,37 +127,17 @@ async function resolveDecorationItems(
     return { error: 'El costo de decoración no es válido' };
   }
 
-  const biomboSelected = items.some((item) => isBiomboTematicoName(item.name));
-  let resolvedTheme = null;
-
-  if (biomboSelected) {
-    const hasThemes = await localHasDecorationThemeOptions(localId);
-    if (hasThemes) {
-      if (!decorationThemeId) {
-        return { error: 'Selecciona un tema para Biombo temático' };
-      }
-      resolvedTheme = await resolveDecorationTheme(localId, decorationThemeId);
-      if (!resolvedTheme) {
-        return { error: 'Tema de biombo temático no válido' };
-      }
-    }
-  }
+  const detail = String(decorationDetail ?? '').trim();
 
   return items.map((item) => ({
     ...item,
     price_per_plate:
       overridePrice != null && items.length === 1 ? overridePrice : item.price_per_plate,
-    ...(isBiomboTematicoName(item.name) && resolvedTheme
-      ? {
-          themeId: resolvedTheme.id,
-          themeName: resolvedTheme.name,
-          themeUnitPrice: Math.round((Number(resolvedTheme.price) || 0) * 100) / 100,
-        }
-      : {}),
+    detail,
   }));
 }
 
-function calculateDecorationCost(decorationPlates, guestCount, decorationPrice) {
+function calculateDecorationCost(decorationPlates, decorationPrice) {
   const hasOverride = decorationPrice != null && decorationPrice !== '';
   if (hasOverride && decorationPlates.length >= 1) {
     const override = Number(decorationPrice);
@@ -170,26 +148,16 @@ function calculateDecorationCost(decorationPlates, guestCount, decorationPrice) 
   }
 
   const platesFlat = decorationPlates.reduce((sum, item) => sum + item.price_per_plate, 0);
-  const themeExtra = decorationPlates.reduce((sum, item) => {
-    if (item.themeUnitPrice > 0) {
-      return sum + item.themeUnitPrice;
-    }
-    return sum;
-  }, 0);
-
-  return Math.round((platesFlat + themeExtra) * 100) / 100;
+  return Math.round(platesFlat * 100) / 100;
 }
 
-function mapDecorationItems(decorationPlates, guestCount, decorationPrice) {
+function mapDecorationItems(decorationPlates, decorationPrice) {
   const hasOverride = decorationPrice != null && decorationPrice !== '';
   const overrideTotal =
     hasOverride && decorationPlates.length >= 1 ? Number(decorationPrice) || 0 : null;
 
   return decorationPlates.map((item) => {
     let price = item.price_per_plate;
-    if (item.themeUnitPrice > 0) {
-      price += item.themeUnitPrice;
-    }
     if (overrideTotal != null && decorationPlates.length === 1) {
       price = overrideTotal;
     }
@@ -199,13 +167,7 @@ function mapDecorationItems(decorationPlates, guestCount, decorationPrice) {
       name: item.name,
       description: item.description ?? '',
       price: Math.round(price * 100) / 100,
-      ...(item.themeId != null
-        ? {
-            themeId: item.themeId,
-            themeName: item.themeName ?? '',
-            themeUnitPrice: item.themeUnitPrice ?? 0,
-          }
-        : {}),
+      ...(item.detail ? { detail: item.detail } : {}),
     };
   });
 }
@@ -280,7 +242,7 @@ async function calculatePromotionalBookingCosts(
     promotionalPlatoFondoId,
     decorationIds = [],
     decorationPrice,
-    decorationThemeId,
+    decorationDetail,
   }
 ) {
   const room = fromDoc(
@@ -377,22 +339,16 @@ async function calculatePromotionalBookingCosts(
     decorationIds,
     decorationPrice,
     roomId,
-    decorationThemeId
+    decorationDetail
   );
   if (decorationResolved?.error) return decorationResolved;
 
   const decorationPlates = decorationResolved;
-  const decorationCostResult = calculateDecorationCost(
-    decorationPlates,
-    guestCount,
-    decorationPrice
-  );
+  const decorationCostResult = calculateDecorationCost(decorationPlates, decorationPrice);
   if (decorationCostResult?.error) return decorationCostResult;
 
   const decorationCost = decorationCostResult;
-  const decorationItems = mapDecorationItems(decorationPlates, guestCount, decorationPrice);
-  const storedDecorationThemeId =
-    decorationPlates.find((item) => item.themeId != null)?.themeId ?? null;
+  const decorationItems = mapDecorationItems(decorationPlates, decorationPrice);
 
   const totalCost = Math.round((rentalCost + foodCost + decorationCost) * 100) / 100;
   const suggestedDeposit = Math.round(totalCost * 0.3 * 100) / 100;
@@ -425,12 +381,12 @@ async function calculatePromotionalBookingCosts(
       entrada: null,
       bebida: null,
       postre: null,
+      helado: null,
     },
     promotionalExtras,
     promotionalIncludes: promoIncludes,
     decorationCost,
     decorationItems,
-    decorationThemeId: storedDecorationThemeId,
     totalCost,
     suggestedDeposit,
     plateDetails: promoPlatoFondo
@@ -469,9 +425,11 @@ export async function calculateBookingCosts(
     bebidaPrice,
     postreId,
     postrePrice,
+    heladoId,
+    heladoPrice,
     decorationIds = [],
     decorationPrice,
-    decorationThemeId,
+    decorationDetail,
     promotionalExtraIds = [],
     promotionalPlatoFondoId,
   }
@@ -489,7 +447,7 @@ export async function calculateBookingCosts(
       promotionalPlatoFondoId,
       decorationIds,
       decorationPrice,
-      decorationThemeId,
+      decorationDetail,
     });
   }
 
@@ -569,12 +527,20 @@ export async function calculateBookingCosts(
 
   const entrada = await resolveOptionalExtra(packageId, entradaId, 'entrada', entradaPrice, guestCount);
   if (entrada?.error) return entrada;
-  const bebida = await resolveOptionalExtra(packageId, bebidaId, 'bebida', bebidaPrice, guestCount);
+  const bebida = await resolveOptionalExtra(
+    packageId,
+    bebidaId,
+    BEBIDA_CATEGORIES,
+    bebidaPrice,
+    guestCount
+  );
   if (bebida?.error) return bebida;
   const postre = await resolveOptionalExtra(packageId, postreId, 'postre', postrePrice, guestCount);
   if (postre?.error) return postre;
+  const helado = await resolveOptionalExtra(packageId, heladoId, 'helado', heladoPrice, guestCount);
+  if (helado?.error) return helado;
 
-  const extras = [entrada, bebida, postre].filter(Boolean);
+  const extras = [entrada, bebida, postre, helado].filter(Boolean);
   const extrasCost = Math.round(extras.reduce((sum, item) => sum + item.price, 0) * 100) / 100;
   const foodCost = extrasCost;
 
@@ -582,22 +548,16 @@ export async function calculateBookingCosts(
     decorationIds,
     decorationPrice,
     roomId,
-    decorationThemeId
+    decorationDetail
   );
   if (decorationResolved?.error) return decorationResolved;
 
   const decorationPlates = decorationResolved;
-  const decorationCostResult = calculateDecorationCost(
-    decorationPlates,
-    guestCount,
-    decorationPrice
-  );
+  const decorationCostResult = calculateDecorationCost(decorationPlates, decorationPrice);
   if (decorationCostResult?.error) return decorationCostResult;
 
   const decorationCost = decorationCostResult;
-  const decorationItems = mapDecorationItems(decorationPlates, guestCount, decorationPrice);
-  const storedDecorationThemeId =
-    decorationPlates.find((item) => item.themeId != null)?.themeId ?? null;
+  const decorationItems = mapDecorationItems(decorationPlates, decorationPrice);
 
   const totalCost = Math.round((rentalCost + foodCost + decorationCost) * 100) / 100;
 
@@ -619,10 +579,10 @@ export async function calculateBookingCosts(
       entrada: entrada ?? null,
       bebida: bebida ?? null,
       postre: postre ?? null,
+      helado: helado ?? null,
     },
     decorationCost,
     decorationItems,
-    decorationThemeId: storedDecorationThemeId,
     totalCost,
     suggestedDeposit,
     plateDetails,

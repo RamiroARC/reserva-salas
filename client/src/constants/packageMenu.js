@@ -1,11 +1,35 @@
+import { BEBIDA_CATEGORIES, HELADO_CATEGORY, POSTRE_CATEGORY, isBebidaCategory } from './menuCategories';
+
 export const PLATO_FONDO_CATEGORY = 'plato_fondo';
 export const BIOMBO_TEMATICO_NAME = 'Biombo temático';
+
+export const PACKAGE_MANAGER_SECTIONS = [
+  { category: PLATO_FONDO_CATEGORY, label: 'Platos de fondo', priceSuffix: '/persona' },
+  { category: 'entrada', label: 'Entradas', priceSuffix: '/persona' },
+  { category: 'bebida_cortesia', label: 'Bebidas de Cortesía', priceSuffix: '/persona' },
+  { category: 'bebida_pack', label: 'Pack de bebidas', priceSuffix: '/persona' },
+  { category: 'bebida_otras', label: 'Otras Bebidas', priceSuffix: '/persona' },
+  { category: POSTRE_CATEGORY, label: 'Postres', priceSuffix: '/persona' },
+  { category: HELADO_CATEGORY, label: 'Helados', priceSuffix: '/persona' },
+];
 
 export const PACKAGE_MENU_SECTIONS = [
   { category: PLATO_FONDO_CATEGORY, label: 'Plato de fondo', required: true, perPerson: true },
   { category: 'entrada', label: 'Entrada', required: false, perPerson: true },
-  { category: 'bebida', label: 'Bebida', required: false, perPerson: true },
-  { category: 'postre', label: 'Helado o postre', required: false, perPerson: true },
+  { category: 'bebida_cortesia', label: 'Bebidas de Cortesía', required: false, perPerson: true },
+  { category: 'bebida_pack', label: 'Pack de bebidas', required: false, perPerson: true },
+  { category: 'bebida_otras', label: 'Otras Bebidas', required: false, perPerson: true },
+  { category: POSTRE_CATEGORY, label: 'Postres', required: false, perPerson: true },
+  { category: HELADO_CATEGORY, label: 'Helados', required: false, perPerson: true },
+];
+
+export const PRICE_PRIMARY_CATEGORIES = [
+  'decoracion',
+  PLATO_FONDO_CATEGORY,
+  'entrada',
+  POSTRE_CATEGORY,
+  HELADO_CATEGORY,
+  ...BEBIDA_CATEGORIES,
 ];
 
 export function parseDecorationItems(raw) {
@@ -47,7 +71,7 @@ export function isBiomboTematicoName(name) {
 }
 
 export function formatPlateOptionLabel(plate) {
-  if (plate.category === 'bebida' && Number(plate.price_per_plate) > 0) {
+  if (isBebidaCategory(plate.category) && Number(plate.price_per_plate) > 0) {
     return `${plate.name} — S/. ${Number(plate.price_per_plate).toFixed(2)}/persona`;
   }
   if (plate.description) {
@@ -57,15 +81,4 @@ export function formatPlateOptionLabel(plate) {
     return `${plate.name} — S/. ${Number(plate.price_per_plate).toFixed(2)}/persona`;
   }
   return plate.name;
-}
-
-export function formatThemeOptionLabel(theme) {
-  const price = Number(theme.price) || 0;
-  if (theme.description) {
-    return `${theme.name} — ${theme.description}`;
-  }
-  if (price > 0) {
-    return `${theme.name} — S/. ${price.toFixed(2)}/unidad`;
-  }
-  return theme.name;
 }

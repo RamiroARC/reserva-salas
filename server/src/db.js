@@ -1,6 +1,7 @@
 import { JAZMINES } from './catalogs/jazminesCatalog.js';
 import { VENUE } from './catalogs/venue.js';
 import { seedDecorationThemeOptions } from './catalogs/decorationThemeOptionsCatalog.js';
+import { migrateMenuPlateCategories } from './migrations/migrateMenuCategories.js';
 import { seedLocalCatalogs } from './services/localSeed.js';
 import { hashPassword } from './services/password.js';
 import {
@@ -143,6 +144,7 @@ export async function initDb() {
   initialized = (async () => {
     await dbHandle();
     await ensureIndexes();
+    await migrateMenuPlateCategories();
     const companyId = await bootstrapEmptyDatabase();
     await seedExistingLocalThemeOptions();
     await bootstrapUsers(companyId);

@@ -8,7 +8,8 @@ export async function hydrateBooking(doc) {
   if (!doc) return null;
   const booking = fromDoc(doc);
 
-  const [room, pkg, promo, menuPlate, promoPlato, entrada, bebida, postre] = await Promise.all([
+  const [room, pkg, promo, menuPlate, promoPlato, entrada, bebida, postre, helado] =
+    await Promise.all([
     C('rooms').findOne({ _id: booking.room_id }),
     booking.package_id ? C('packages').findOne({ _id: booking.package_id }) : null,
     booking.promotional_package_id
@@ -21,6 +22,7 @@ export async function hydrateBooking(doc) {
     booking.menu_entrada_id ? C('menu_plates').findOne({ _id: booking.menu_entrada_id }) : null,
     booking.menu_bebida_id ? C('menu_plates').findOne({ _id: booking.menu_bebida_id }) : null,
     booking.menu_postre_id ? C('menu_plates').findOne({ _id: booking.menu_postre_id }) : null,
+    booking.menu_helado_id ? C('menu_plates').findOne({ _id: booking.menu_helado_id }) : null,
   ]);
 
   return {
@@ -30,6 +32,7 @@ export async function hydrateBooking(doc) {
     menu_entrada_name: trimName(booking.menu_entrada_name) || entrada?.name || '',
     menu_bebida_name: trimName(booking.menu_bebida_name) || bebida?.name || '',
     menu_postre_name: trimName(booking.menu_postre_name) || postre?.name || '',
+    menu_helado_name: trimName(booking.menu_helado_name) || helado?.name || '',
     menu_plate_price: menuPlate?.price_per_plate ?? null,
     menu_plate_description: menuPlate?.description ?? null,
     menu_bebida_description: bebida?.description ?? null,

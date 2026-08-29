@@ -1,15 +1,13 @@
 import { useState } from 'react';
 import {
-  createDecorationThemeOption,
   createPlate,
-  deleteDecorationThemeOption,
   deletePlate,
   formatCurrency,
-  updateDecorationThemeOption,
   updatePackage,
   updatePlate,
 } from '../../api';
-import { isBiomboTematicoName, isPlatoFondoCategory } from '../../constants/packageMenu';
+import { isPlatoFondoCategory, PACKAGE_MANAGER_SECTIONS, PRICE_PRIMARY_CATEGORIES } from '../../constants/packageMenu';
+import { isBebidaCategory } from '../../constants/menuCategories';
 
 const DECORATION_SECTION = {
   category: 'decoracion',
@@ -17,36 +15,19 @@ const DECORATION_SECTION = {
   priceSuffix: '',
 };
 
-const MENU_SECTIONS = [
-  DECORATION_SECTION,
-  { category: 'plato_fondo', label: 'Platos de fondo', priceSuffix: '/persona' },
-  { category: 'entrada', label: 'Entradas', priceSuffix: '/persona' },
-  { category: 'bebida', label: 'Bebidas', priceSuffix: '/persona' },
-  { category: 'postre', label: 'Helados y postres', priceSuffix: '/persona' },
-];
-
-const PACKAGE_MENU_SECTIONS = MENU_SECTIONS.filter(
-  (section) => section.category !== 'decoracion'
-);
+const PACKAGE_MENU_SECTIONS = PACKAGE_MANAGER_SECTIONS;
 
 const emptyItemForm = { name: '', description: '', price: '0' };
-const emptyThemeForm = { name: '', description: '', price: '0' };
-
-const THEME_SECTION = {
-  key: 'decoration-themes',
-  label: 'Temas de Biombo temático a elección',
-  priceSuffix: '/unidad',
-};
 
 function sectionKey(packageId, category) {
   return `${packageId}:${category}`;
 }
 
 function formatPlatePrice(plate, suffix, category) {
-  const pricePrimary = ['decoracion', 'plato_fondo', 'entrada', 'postre', 'bebida'].includes(category);
+  const pricePrimary = PRICE_PRIMARY_CATEGORIES.includes(category);
 
   if (pricePrimary) {
-    if (category === 'bebida' && !plate.price_per_plate && plate.description) {
+    if (isBebidaCategory(category) && !plate.price_per_plate && plate.description) {
       return plate.description;
     }
     return `${formatCurrency(plate.price_per_plate ?? 0)}${suffix}`;
@@ -102,9 +83,7 @@ function IconChevron({ open }) {
 export default function PackageManager({
   packages,
   seasons,
-  decorationThemeOptions = [],
   onRefresh,
-  onRefreshThemes,
 }) {
   const [expandedPackages, setExpandedPackages] = useState(() => new Set());
   const [expandedSections, setExpandedSections] = useState(() => new Set());
@@ -115,10 +94,6 @@ export default function PackageManager({
   const [editingRentalPackageId, setEditingRentalPackageId] = useState(null);
   const [rentalPriceForm, setRentalPriceForm] = useState('');
   const [saving, setSaving] = useState(false);
-  const [showThemeCreate, setShowThemeCreate] = useState(false);
-  const [themeCreateForm, setThemeCreateForm] = useState(emptyThemeForm);
-  const [editingThemeId, setEditingThemeId] = useState(null);
-  const [themeEditForm, setThemeEditForm] = useState(emptyThemeForm);
 
   const togglePackage = (packageId) => {
     setExpandedPackages((prev) => {
@@ -266,174 +241,6 @@ export default function PackageManager({
   const decoracionPackage = packages.find((pkg) => pkg.type === 'solo_alquiler') ?? packages[0];
   const decoracionPlates =
     decoracionPackage?.plates?.filter((plate) => plate.category === 'decoracion') ?? [];
-  const hasBiomboTematico = decoracionPlates.some((plate) => isBiomboTematicoName(plate.name));
-  const activeThemeOptions = decorationThemeOptions.filter((item) => item.active !== false);
-
-  const refreshThemes = async () => {
-    if (onRefreshThemes) await onRefreshThemes();
-  };
-
-  const saveThemeCreate = async () => {
-    if (!themeCreateForm.name.trim()) return;
-    setSaving(true);
-    try {
-      await createDecorationThemeOption({
-        name: themeCreateForm.name.trim(),
-        description: themeCreateForm.description.trim(),
-        price: Number(themeCreateForm.price) || 0,
-      });
-      setShowThemeCreate(false);
-      setThemeCreateForm(emptyThemeForm);
-      await refreshThemes();
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const startThemeEdit = (item) => {
-    setShowThemeCreate(false);
-    setEditingThemeId(item.id);
-    setThemeEditForm({
-      name: item.name,
-      description: item.description ?? '',
-      price: String(item.price ?? 0),
-    });
-  };
-
-  const saveThemeEdit = async () => {
-    if (!editingThemeId || !themeEditForm.name.trim()) return;
-    setSaving(true);
-    try {
-      await updateDecorationThemeOption(editingThemeId, {
-        name: themeEditForm.name.trim(),
-        description: themeEditForm.description.trim(),
-        price: Number(themeEditForm.price) || 0,
-      });
-      setEditingThemeId(null);
-      await refreshThemes();
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const removeTheme = async (item) => {
-    if (!window.confirm(`¿Eliminar "${item.name}"?`)) return;
-    setSaving(true);
-    try {
-      await deleteDecorationThemeOption(item.id);
-      if (editingThemeId === item.id) setEditingThemeId(null);
-      await refreshThemes();
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const formatThemePrice = (item) =>
-    `${formatCurrency(Number(item.price) || 0)}${THEME_SECTION.priceSuffix}`;
-
-  const isThemeSectionExpanded = expandedSections.has(THEME_SECTION.key);
-
-  const renderThemeSection = () => (
-    <div
-      className={`plate-list ${isThemeSectionExpanded ? '' : 'plate-list--collapsed'} plate-list--plato-fondo decoration-themes`}
-    >
-      <div className="plate-list__header">
-        <button
-          type="button"
-          className="plate-list__toggle"
-          onClick={() => toggleSection(THEME_SECTION.key)}
-          aria-expanded={isThemeSectionExpanded}
-        >
-          <IconChevron open={isThemeSectionExpanded} />
-          <h4>{THEME_SECTION.label}</h4>
-          <span className="item-badge item-badge--plato-fondo">Biombo temático</span>
-          <span className="plate-list__count">{activeThemeOptions.length}</span>
-        </button>
-        {!showThemeCreate && (
-          <button
-            type="button"
-            className="btn btn--ghost btn--sm"
-            onClick={() => {
-              setShowThemeCreate(true);
-              setThemeCreateForm(emptyThemeForm);
-              setEditingThemeId(null);
-            }}
-            disabled={saving}
-          >
-            + Agregar ítem
-          </button>
-        )}
-      </div>
-
-      {isThemeSectionExpanded && (
-        <div className="plate-list__body">
-          {activeThemeOptions.map((item) =>
-            editingThemeId === item.id ? (
-              <div key={item.id} className="plate-row plate-row--editing plate-row--plato-fondo">
-                {renderItemForm(
-                  themeEditForm,
-                  setThemeEditForm,
-                  saveThemeEdit,
-                  () => setEditingThemeId(null),
-                  !themeEditForm.name.trim()
-                )}
-              </div>
-            ) : (
-              <div key={item.id} className="plate-row plate-row--plato-fondo">
-                <div className="plate-row__info">
-                  <strong>{item.name}</strong>
-                  {item.description ? (
-                    <span className="plate-row__desc">{item.description}</span>
-                  ) : null}
-                </div>
-                <div className="plate-row__actions">
-                  <span className="plate-price plate-price--static">{formatThemePrice(item)}</span>
-                  <button
-                    type="button"
-                    className="icon-btn"
-                    aria-label={`Editar ${item.name}`}
-                    title="Editar"
-                    onClick={() => startThemeEdit(item)}
-                    disabled={saving}
-                  >
-                    <IconEdit />
-                  </button>
-                  <button
-                    type="button"
-                    className="icon-btn icon-btn--danger"
-                    aria-label={`Eliminar ${item.name}`}
-                    title="Eliminar"
-                    onClick={() => removeTheme(item)}
-                    disabled={saving}
-                  >
-                    <IconTrash />
-                  </button>
-                </div>
-              </div>
-            )
-          )}
-
-          {showThemeCreate &&
-            renderItemForm(
-              themeCreateForm,
-              setThemeCreateForm,
-              saveThemeCreate,
-              () => {
-                setShowThemeCreate(false);
-                setThemeCreateForm(emptyThemeForm);
-              },
-              !themeCreateForm.name.trim()
-            )}
-
-          {activeThemeOptions.length === 0 && !showThemeCreate && (
-            <p className="form-hint">
-              Agrega temas para que el cliente pueda elegir al reservar con Biombo temático.
-            </p>
-          )}
-        </div>
-      )}
-    </div>
-  );
 
   const renderMenuSection = (packageId, section, plates) => {
     const addKey = sectionKey(packageId, section.category);
@@ -565,8 +372,6 @@ export default function PackageManager({
               Catálogo único de decoración para ambos tipos de paquete.
             </p>
             {renderMenuSection(decoracionPackage.id, DECORATION_SECTION, decoracionPlates)}
-
-            {hasBiomboTematico && renderThemeSection()}
           </article>
         )}
 

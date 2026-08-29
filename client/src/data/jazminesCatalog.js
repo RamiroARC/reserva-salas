@@ -40,13 +40,15 @@ export const MENU_CATALOG = {
     { name: 'Llunca de pollo y ¼ Picante de Cuy (Almuerzo)', price: 47 },
     { name: 'Asado de chancho con mote blanco, ensalada y mollete', price: 38 },
   ],
-  bebidas: [
-    { name: 'Jarra de chicha por mesa', note: 'Oferta o incluye' },
+  bebidas_cortesia: [{ name: 'Jarra de chicha por mesa', note: 'Oferta o incluye' }],
+  bebidas_pack: [
     {
       name: 'Gaseosa 3 lts. Agua mineral 3 lts. y Vino Santiago Queirolo',
       price: 5,
       unit: 'persona',
     },
+  ],
+  bebidas_otras: [
     {
       name: 'Cerveza Pilsen',
       price: 8.5,
@@ -64,10 +66,8 @@ export const MENU_CATALOG = {
     { name: 'Jamón con ensalada', price: 12 },
     { name: 'Causa criolla de pollo o atún filete', price: 4.5 },
   ],
-  postres: [
-    { name: "Helados D'ONORIO", price: 5 },
-    { name: 'Arroz con leche ó Mazamorra morada', price: 4 },
-  ],
+  helados: [{ name: "Helados D'ONORIO", price: 5 }],
+  postres: [{ name: 'Arroz con leche ó Mazamorra morada', price: 4 }],
   decoracion: [
     {
       name: 'Biombo creación Jazmines',

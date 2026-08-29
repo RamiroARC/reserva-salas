@@ -89,6 +89,9 @@ export default function BookingList({
         extrasTerms: contractExtraTerms,
       });
       previewDocument(html, `Contrato — ${local?.name ?? detail.room_name}`, setDocumentPreview);
+    } catch (err) {
+      console.error(err);
+      alert('No se pudo generar la vista previa del contrato.');
     } finally {
       setPrintingId(null);
     }

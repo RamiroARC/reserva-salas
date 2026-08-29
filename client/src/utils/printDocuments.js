@@ -167,6 +167,40 @@ function jazminesPrintStyles() {
       font-size: 11px;
       font-weight: bold;
     }
+    .contract-menu-block {
+      margin: 8px 0 10px;
+    }
+    .contract-menu-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 5px;
+      padding-left: 8px;
+    }
+    .contract-menu-section-title {
+      padding-left: 8px;
+      margin: 8px 0 4px;
+      font-weight: bold;
+      text-decoration: underline;
+    }
+    .contract-menu-item__label {
+      flex: 0 0 118px;
+    }
+    .contract-menu-item__content {
+      flex: 1 1 auto;
+      min-width: 0;
+      padding-right: 8px;
+    }
+    .contract-menu-item__amount {
+      flex: 0 0 178px;
+      text-align: right;
+      font-weight: bold;
+      font-size: 10px;
+      line-height: 1.35;
+    }
+    .contract-menu-block .section-title {
+      padding-left: 8px;
+    }
     ${documentHeaderStyles()}
     .doc-title {
       text-align: center;
@@ -198,10 +232,152 @@ function formatMenuItemPrice(name, price, description, attendees, perPerson = fa
   return '';
 }
 
-function renderDecorationColorOnly(decorationColor) {
+function isHeladoItem(name) {
+  return /helado/i.test(String(name ?? ''));
+}
+
+function renderContractItemLine(label, name, priceLabel, { quoted = true, complimentary = false } = {}) {
+  if (!name?.trim() && !complimentary) return '';
+
+  const displayName = name?.trim() || '';
+  const namePart = quoted && displayName ? `"${displayName}"` : displayName;
+  const amount = complimentary ? 'Cortesía' : priceLabel || '';
+
+  return `<div class="contract-menu-item">
+    <span class="contract-menu-item__label"><strong>${label}</strong></span>
+    <span class="contract-menu-item__content">${namePart}</span>
+    <span class="contract-menu-item__amount">${amount}</span>
+  </div>`;
+}
+
+function renderContractDecorationSection(decorationColor, decorationItems = []) {
   const colors = formatDecorationColors(decorationColor);
-  if (!colors) return '';
-  return `<div class="line"><strong>Color de decoración del local:</strong> ${colors}</div>`;
+  const selected = decorationItems.filter((item) => item?.name?.trim());
+
+  if (!colors && !selected.length) return '';
+
+  let html = `<div class="contract-menu-section-title">Decoración del Local</div>`;
+
+  if (colors) {
+    html += renderContractItemLine('Colores de Local:', colors, '');
+  }
+
+  for (const item of selected) {
+    const detail = item.detail?.trim();
+    const displayText = detail || item.name;
+    const priceStr = item.price > 0 ? formatSoles(item.price) : '';
+    html += renderContractItemLine('Extras de decoración:', displayText, priceStr);
+  }
+
+  return html;
+}
+
+function renderContractMenuDetails(data) {
+  const {
+    includesFood,
+    isPromotional,
+    attendees,
+    menuPlateName,
+    menuPlateDescription,
+    platePrice,
+    menuEntradaName,
+    menuEntradaPrice,
+    menuBebidaName,
+    menuBebidaPrice,
+    menuBebidaDescription,
+    menuPostreName,
+    menuPostrePrice,
+    menuHeladoName,
+    menuHeladoPrice,
+    decorationColor,
+    decorationItems,
+    promotionalIncludes,
+    promotionalExtras,
+  } = data;
+
+  if (isPromotional) {
+    return renderPromotionalPackageContent({
+      promotionalIncludes,
+      promotionalExtras,
+      attendees,
+    });
+  }
+
+  if (!includesFood) {
+    const section = renderContractDecorationSection(decorationColor, decorationItems);
+    return section ? `<div class="contract-menu-block">${section}</div>` : '';
+  }
+
+  const brindisItem = MENU_CATALOG.brindis?.[0];
+  const sections = [];
+
+  if (brindisItem?.name) {
+    sections.push(
+      renderContractItemLine('Brindis:', brindisItem.name, '', { complimentary: true })
+    );
+  }
+
+  if (menuPlateName?.trim()) {
+    sections.push(
+      renderContractItemLine(
+        'Plato de fondo:',
+        menuPlateName,
+        formatMenuItemPrice(menuPlateName, platePrice, menuPlateDescription, attendees, true)
+      )
+    );
+  }
+
+  if (menuBebidaName?.trim()) {
+    sections.push(
+      renderContractItemLine(
+        'Bebidas:',
+        menuBebidaName,
+        formatMenuItemPrice(
+          menuBebidaName,
+          menuBebidaPrice,
+          menuBebidaPrice > 0 ? null : menuBebidaDescription,
+          attendees,
+          true
+        )
+      )
+    );
+  }
+
+  if (menuEntradaName?.trim()) {
+    sections.push(
+      renderContractItemLine(
+        'Entrada:',
+        menuEntradaName,
+        formatMenuItemPrice(menuEntradaName, menuEntradaPrice, null, attendees, true)
+      )
+    );
+  }
+
+  if (menuPostreName?.trim()) {
+    sections.push(
+      renderContractItemLine(
+        'Postres:',
+        menuPostreName,
+        formatMenuItemPrice(menuPostreName, menuPostrePrice, null, attendees, true)
+      )
+    );
+  }
+
+  if (menuHeladoName?.trim()) {
+    sections.push(
+      renderContractItemLine(
+        'Helados:',
+        menuHeladoName,
+        formatMenuItemPrice(menuHeladoName, menuHeladoPrice, null, attendees, true)
+      )
+    );
+  }
+
+  const decorationSection = renderContractDecorationSection(decorationColor, decorationItems);
+  if (decorationSection) sections.push(decorationSection);
+
+  const body = sections.filter(Boolean).join('');
+  return body ? `<div class="contract-menu-block">${body}</div>` : '';
 }
 
 function renderPromotionalPackageContent({
@@ -248,106 +424,6 @@ function renderPromotionalPackageContent({
   return html;
 }
 
-function renderDecorationPackage(decorationColor, decorationItems = []) {
-  const selected = decorationItems.filter((item) => item?.name?.trim());
-  if (!selected.length) return '';
-
-  const colors = formatDecorationColors(decorationColor);
-  const catalogByName = new Map(MENU_CATALOG.decoracion.map((item) => [item.name, item]));
-
-  const rows = selected
-    .map((item) => {
-      const catalog = catalogByName.get(item.name);
-      const colorSuffix =
-        item.name.includes('Jazmines') && colors
-          ? `. Color de decoración del local: ${colors}`
-          : '';
-      const priceStr =
-        item.price > 0 ? `<span class="price">${formatSoles(item.price)}</span>` : '';
-      const description = catalog?.description ? `: ${catalog.description}` : '';
-      const themeSuffix = item.themeName
-        ? item.themeUnitPrice > 0
-          ? ` — Tema: ${item.themeName} (${formatSoles(item.themeUnitPrice)}/unidad)`
-          : ` — Tema: ${item.themeName}`
-        : '';
-
-      return `<div class="menu-item selected">► ${item.name}${description}${themeSuffix}${colorSuffix}${priceStr}</div>`;
-    })
-    .join('');
-
-  return `
-  <div class="section-title">Decoración del local</div>
-  ${rows}`;
-}
-
-function renderSelectedMainCourse({ includesFood, menuPlateName, menuPlateDescription, platePrice, attendees }) {
-  if (!includesFood || !menuPlateName?.trim()) return '';
-
-  const priceLabel = formatMenuItemPrice(
-    menuPlateName,
-    platePrice,
-    menuPlateDescription,
-    attendees,
-    true
-  );
-
-  return `
-  <div class="section-title">Plato de fondo seleccionado</div>
-  <div class="menu-item selected">► ${menuPlateName.trim()}<span class="price">${priceLabel}</span></div>`;
-}
-
-function renderSelectedPackageItems(data) {
-  const {
-    includesFood,
-    attendees,
-    menuEntradaName,
-    menuEntradaPrice,
-    menuBebidaName,
-    menuBebidaPrice,
-    menuBebidaDescription,
-    menuPostreName,
-    menuPostrePrice,
-  } = data;
-
-  if (!includesFood) return '';
-
-  const sections = [
-    {
-      title: 'Entrada seleccionada',
-      name: menuEntradaName,
-      price: menuEntradaPrice,
-      description: null,
-    },
-    {
-      title: 'Bebida seleccionada',
-      name: menuBebidaName,
-      price: menuBebidaPrice,
-      description: menuBebidaDescription,
-    },
-    {
-      title: 'Helado o postre seleccionado',
-      name: menuPostreName,
-      price: menuPostrePrice,
-      description: null,
-    },
-  ]
-    .filter((section) => section.name?.trim())
-    .map(
-      (section) => `
-  <div class="section-title">${section.title}</div>
-  <div class="menu-item selected">► ${section.name}<span class="price">${formatMenuItemPrice(
-        section.name,
-        section.price,
-        section.price > 0 ? null : section.description,
-        attendees,
-        true
-      )}</span></div>`
-    )
-    .join('');
-
-  return sections;
-}
-
 function buildJazminesBody(data, docType) {
   const {
     organizer,
@@ -373,6 +449,8 @@ function buildJazminesBody(data, docType) {
     menuBebidaDescription,
     menuPostreName,
     menuPostrePrice,
+    menuHeladoName,
+    menuHeladoPrice,
     packageUnitPrice,
     baseLocalCost,
     rentalCost,
@@ -421,33 +499,27 @@ function buildJazminesBody(data, docType) {
         .filter(Boolean)
         .join(' · ');
 
-  const decorationSection = isPromoPackage
-    ? renderDecorationColorOnly(decorationColor)
-    : renderDecorationPackage(decorationColor, decorationItems);
-
-  const menuSection = isPromoPackage
-    ? renderPromotionalPackageContent({
-        promotionalIncludes,
-        promotionalExtras,
-        attendees,
-      })
-    : `${renderSelectedMainCourse({
-        includesFood,
-        menuPlateName,
-        menuPlateDescription,
-        platePrice,
-        attendees,
-      })}${renderSelectedPackageItems({
-        includesFood,
-        attendees,
-        menuEntradaName,
-        menuEntradaPrice,
-        menuBebidaName,
-        menuBebidaPrice,
-        menuBebidaDescription,
-        menuPostreName,
-        menuPostrePrice,
-      })}`;
+  const contractMenuSection = renderContractMenuDetails({
+    includesFood,
+    isPromotional: isPromoPackage,
+    attendees,
+    menuPlateName,
+    menuPlateDescription,
+    platePrice,
+    menuEntradaName,
+    menuEntradaPrice,
+    menuBebidaName,
+    menuBebidaPrice,
+    menuBebidaDescription,
+    menuPostreName,
+    menuPostrePrice,
+    menuHeladoName,
+    menuHeladoPrice,
+    decorationColor,
+    decorationItems,
+    promotionalIncludes,
+    promotionalExtras,
+  });
 
   const defaultIncludesSection = isPromoPackage
     ? ''
@@ -497,8 +569,7 @@ function buildJazminesBody(data, docType) {
   </div>
   ${pricingNotes ? `<div class="line"><strong>Detalle de precio:</strong> ${pricingNotes}</div>` : ''}
 
-  ${decorationSection}
-  ${menuSection}
+  ${contractMenuSection}
   ${defaultIncludesSection}
 
   ${notes ? `<div class="line" style="margin-top:6px"><strong>Observaciones:</strong> ${notes}</div>` : ''}
@@ -581,6 +652,8 @@ export function buildContractDocument(data) {
       menuBebidaDescription: data.menuBebidaDescription,
       menuPostreName: data.menuPostreName,
       menuPostrePrice: data.menuPostrePrice,
+      menuHeladoName: data.menuHeladoName,
+      menuHeladoPrice: data.menuHeladoPrice,
       packageUnitPrice: data.packageUnitPrice,
       baseLocalCost: data.baseLocalCost,
       pricePerPerson: data.pricePerPerson,
@@ -622,6 +695,18 @@ export function mapBookingToContractData(detail) {
   const promotionalIncludes = parsePromoIncludes(detail.promotional_includes);
   const promotionalExtras = parsePromotionalExtras(detail.promotional_extras);
 
+  let menuPostreName = isPromotional ? '' : detail.menu_postre_name?.trim() || '';
+  let menuPostrePrice = isPromotional ? 0 : detail.menu_postre_price || 0;
+  let menuHeladoName = isPromotional ? '' : detail.menu_helado_name?.trim() || '';
+  let menuHeladoPrice = isPromotional ? 0 : detail.menu_helado_price || 0;
+
+  if (!isPromotional && !menuHeladoName && isHeladoItem(menuPostreName)) {
+    menuHeladoName = menuPostreName;
+    menuHeladoPrice = menuPostrePrice;
+    menuPostreName = '';
+    menuPostrePrice = 0;
+  }
+
   return {
     id: detail.id,
     title: detail.title,
@@ -650,8 +735,10 @@ export function mapBookingToContractData(detail) {
     menuBebidaName: isPromotional ? '' : detail.menu_bebida_name?.trim() || '',
     menuBebidaPrice: isPromotional ? 0 : detail.menu_bebida_price || 0,
     menuBebidaDescription: isPromotional ? undefined : detail.menu_bebida_description,
-    menuPostreName: isPromotional ? '' : detail.menu_postre_name?.trim() || '',
-    menuPostrePrice: isPromotional ? 0 : detail.menu_postre_price || 0,
+    menuPostreName,
+    menuPostrePrice,
+    menuHeladoName,
+    menuHeladoPrice,
     promotionalDescription: detail.promotional_description ?? '',
     promotionalIncludes,
     promotionalExtras,

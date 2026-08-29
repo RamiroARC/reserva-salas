@@ -5,7 +5,8 @@ import {
   serializeDecorationColors,
 } from '../../constants/decorationColors';
 import { isBookingLocked } from '../../constants/bookingStatus';
-import { PACKAGE_MENU_SECTIONS, formatPlateOptionLabel, formatThemeOptionLabel, getDecoracionPlates, isBiomboTematicoName, parseDecorationItems } from '../../constants/packageMenu';
+import { PACKAGE_MENU_SECTIONS, formatPlateOptionLabel, getDecoracionPlates, parseDecorationItems } from '../../constants/packageMenu';
+import { getBookingExtraKey } from '../../constants/menuCategories';
 import { PAYMENT_METHODS } from '../../constants/paymentTypes';
 import { isPlatoFondoIncludeText, parsePromotionalExtras } from '../../constants/promotionalPackages';
 import { buildQuoteDocument, previewDocument } from '../../utils/printDocuments';
@@ -46,7 +47,6 @@ export default function BookingForm({
   promotionalPackages = [],
   promotionalOptionalItems = [],
   decorationColorOptions = [],
-  decorationThemeOptions = [],
   contractExtraTerms = [],
   selectedDate,
   booking,
@@ -68,8 +68,9 @@ export default function BookingForm({
   const prevEntradaIdRef = useRef('');
   const prevBebidaIdRef = useRef('');
   const prevPostreIdRef = useRef('');
+  const prevHeladoIdRef = useRef('');
   const prevDecorationNameRef = useRef('');
-  const prevDecorationThemeIdRef = useRef('');
+  const [decorationDetail, setDecorationDetail] = useState('');
   const [title, setTitle] = useState('');
   const [eventType, setEventType] = useState('');
   const [organizer, setOrganizer] = useState('');
@@ -85,10 +86,12 @@ export default function BookingForm({
   const [entradaId, setEntradaId] = useState('');
   const [bebidaId, setBebidaId] = useState('');
   const [postreId, setPostreId] = useState('');
+  const [heladoId, setHeladoId] = useState('');
   const [unitPrice, setUnitPrice] = useState('');
   const [entradaPrice, setEntradaPrice] = useState('');
   const [bebidaPrice, setBebidaPrice] = useState('');
   const [postrePrice, setPostrePrice] = useState('');
+  const [heladoPrice, setHeladoPrice] = useState('');
   const [decorationPrice, setDecorationPrice] = useState('');
   const [startTime, setStartTime] = useState(defaultTimes.start);
   const [endTime, setEndTime] = useState(defaultTimes.end);
@@ -100,7 +103,6 @@ export default function BookingForm({
   const [decorationColors, setDecorationColors] = useState([]);
   const [colorPickerExpanded, setColorPickerExpanded] = useState(true);
   const [selectedDecorationName, setSelectedDecorationName] = useState('');
-  const [decorationThemeId, setDecorationThemeId] = useState('');
   const [notes, setNotes] = useState('');
   const [quote, setQuote] = useState(null);
   const [quoteError, setQuoteError] = useState('');
@@ -159,15 +161,48 @@ export default function BookingForm({
     prevPlateIdRef.current = booking.menu_plate_id ? String(booking.menu_plate_id) : '';
     setEntradaId(booking.menu_entrada_id ? String(booking.menu_entrada_id) : '');
     setBebidaId(booking.menu_bebida_id ? String(booking.menu_bebida_id) : '');
-    setPostreId(booking.menu_postre_id ? String(booking.menu_postre_id) : '');
+
+    const bookingPackage = packages.find((pkg) => pkg.id === booking.package_id);
+    const legacyPostrePlate = bookingPackage?.plates?.find(
+      (plate) => plate.id === booking.menu_postre_id
+    );
+    const legacyHeladoInPostre = legacyPostrePlate?.category === 'helado';
+
+    if (booking.menu_helado_id) {
+      setHeladoId(String(booking.menu_helado_id));
+      setHeladoPrice(String(booking.menu_helado_price ?? ''));
+      setPostreId(booking.menu_postre_id ? String(booking.menu_postre_id) : '');
+      setPostrePrice(
+        booking.menu_postre_id ? String(booking.menu_postre_price ?? '') : ''
+      );
+    } else if (legacyHeladoInPostre) {
+      setHeladoId(String(booking.menu_postre_id));
+      setHeladoPrice(String(booking.menu_postre_price ?? ''));
+      setPostreId('');
+      setPostrePrice('');
+    } else {
+      setPostreId(booking.menu_postre_id ? String(booking.menu_postre_id) : '');
+      setPostrePrice(
+        booking.menu_postre_id ? String(booking.menu_postre_price ?? '') : ''
+      );
+      setHeladoId('');
+      setHeladoPrice('');
+    }
+
     setEntradaPrice(
       booking.menu_entrada_id ? String(booking.menu_entrada_price ?? '') : ''
     );
     setBebidaPrice(booking.menu_bebida_id ? String(booking.menu_bebida_price ?? '') : '');
-    setPostrePrice(booking.menu_postre_id ? String(booking.menu_postre_price ?? '') : '');
     prevEntradaIdRef.current = booking.menu_entrada_id ? String(booking.menu_entrada_id) : '';
     prevBebidaIdRef.current = booking.menu_bebida_id ? String(booking.menu_bebida_id) : '';
-    prevPostreIdRef.current = booking.menu_postre_id ? String(booking.menu_postre_id) : '';
+    prevPostreIdRef.current = booking.menu_postre_id && !legacyHeladoInPostre
+      ? String(booking.menu_postre_id)
+      : '';
+    prevHeladoIdRef.current = booking.menu_helado_id
+      ? String(booking.menu_helado_id)
+      : legacyHeladoInPostre
+        ? String(booking.menu_postre_id)
+        : '';
     setStartTime(isoToTimeInput(booking.start_time));
     setEndTime(isoToTimeInput(booking.end_time));
     setFoodTime(booking.food_time || defaultTimes.food);
@@ -182,20 +217,9 @@ export default function BookingForm({
     setColorPickerExpanded(savedDecorationColors.length === 0);
     const savedDecoration = parseDecorationItems(booking.decoration_items)[0];
     setSelectedDecorationName(savedDecoration?.name ?? '');
-    setDecorationThemeId(
-      booking.decoration_theme_id
-        ? String(booking.decoration_theme_id)
-        : savedDecoration?.themeId
-          ? String(savedDecoration.themeId)
-          : ''
-    );
+    setDecorationDetail(savedDecoration?.detail ?? '');
     setDecorationPrice(savedDecoration?.price != null ? String(savedDecoration.price) : '');
     prevDecorationNameRef.current = savedDecoration?.name ?? '';
-    prevDecorationThemeIdRef.current = booking.decoration_theme_id
-      ? String(booking.decoration_theme_id)
-      : savedDecoration?.themeId
-        ? String(savedDecoration.themeId)
-        : '';
     setNotes(booking.notes || '');
     skipDepositAutoFill.current = true;
     skipPackageAutoFill.current = true;
@@ -257,18 +281,14 @@ export default function BookingForm({
     (section) => section.category !== 'plato_fondo'
   );
 
-  const decoracionPlates = getDecoracionPlates(packages);
-  const activeDecorationThemeOptions = decorationThemeOptions.filter((item) => item.active !== false);
-  const isBiomboTematicoSelected = isBiomboTematicoName(selectedDecorationName);
-
-  const computeBiomboDecorationPrice = () => {
-    const plate = decoracionPlates.find((p) => p.name === selectedDecorationName);
-    const base = Number(plate?.price_per_plate) || 0;
-    if (!isBiomboTematicoSelected || !decorationThemeId) return base;
-    const theme = activeDecorationThemeOptions.find((t) => String(t.id) === decorationThemeId);
-    const themePrice = Number(theme?.price) || 0;
-    return Math.round((base + themePrice) * 100) / 100;
+  const menuExtraState = {
+    entrada: { id: entradaId, setId: setEntradaId, price: entradaPrice, setPrice: setEntradaPrice },
+    bebida: { id: bebidaId, setId: setBebidaId, price: bebidaPrice, setPrice: setBebidaPrice },
+    postre: { id: postreId, setId: setPostreId, price: postrePrice, setPrice: setPostrePrice },
+    helado: { id: heladoId, setId: setHeladoId, price: heladoPrice, setPrice: setHeladoPrice },
   };
+
+  const decoracionPlates = getDecoracionPlates(packages);
 
   const selectedDecorationId =
     decoracionPlates.find((plate) => plate.name === selectedDecorationName)?.id ?? null;
@@ -298,15 +318,6 @@ export default function BookingForm({
       setQuoteError('');
       return;
     } else if (isSoloLocalPackage && unitPrice === '') {
-      setQuote(null);
-      setQuoteError('');
-      return;
-    } else if (
-      !isPromoPackage &&
-      isBiomboTematicoSelected &&
-      activeDecorationThemeOptions.length > 0 &&
-      !decorationThemeId
-    ) {
       setQuote(null);
       setQuoteError('');
       return;
@@ -351,10 +362,12 @@ export default function BookingForm({
           bebidaPrice: isPromoPackage ? undefined : bebidaId ? Number(bebidaPrice) || 0 : undefined,
           postreId: isPromoPackage ? undefined : postreId ? Number(postreId) : undefined,
           postrePrice: isPromoPackage ? undefined : postreId ? Number(postrePrice) || 0 : undefined,
+          heladoId: isPromoPackage ? undefined : heladoId ? Number(heladoId) : undefined,
+          heladoPrice: isPromoPackage ? undefined : heladoId ? Number(heladoPrice) || 0 : undefined,
           decorationIds: isPromoPackage ? undefined : selectedDecorationIds,
-          decorationThemeId:
-            !isPromoPackage && isBiomboTematicoSelected && decorationThemeId
-              ? Number(decorationThemeId)
+          decorationDetail:
+            !isPromoPackage && includesFood && selectedDecorationName
+              ? decorationDetail.trim()
               : undefined,
           decorationPrice: isPromoPackage
             ? undefined
@@ -393,15 +406,15 @@ export default function BookingForm({
     isSoloLocalPackage,
     selectedPackage?.includes_food,
     selectedDecorationName,
-    decorationThemeId,
-    isBiomboTematicoSelected,
-    activeDecorationThemeOptions.length,
+    decorationDetail,
     entradaId,
     entradaPrice,
     bebidaId,
     bebidaPrice,
     postreId,
     postrePrice,
+    heladoId,
+    heladoPrice,
     decorationPrice,
     packageId,
   ]);
@@ -422,16 +435,19 @@ export default function BookingForm({
       setEntradaId('');
       setBebidaId('');
       setPostreId('');
+      setHeladoId('');
       setEntradaPrice('');
       setBebidaPrice('');
       setPostrePrice('');
+      setHeladoPrice('');
       setSelectedDecorationName('');
-      setDecorationThemeId('');
+      setDecorationDetail('');
       setDecorationPrice('');
       prevPlateIdRef.current = '';
       prevEntradaIdRef.current = '';
       prevBebidaIdRef.current = '';
       prevPostreIdRef.current = '';
+      prevHeladoIdRef.current = '';
       prevDecorationNameRef.current = '';
       setSelectedPromoExtraIds([]);
       if (selectedPromoPackage) {
@@ -445,9 +461,11 @@ export default function BookingForm({
       setEntradaId('');
       setBebidaId('');
       setPostreId('');
+      setHeladoId('');
       setEntradaPrice('');
       setBebidaPrice('');
       setPostrePrice('');
+      setHeladoPrice('');
       const defaultRental =
         selectedPackage.rental_price > 0
           ? selectedPackage.rental_price
@@ -457,6 +475,7 @@ export default function BookingForm({
       prevEntradaIdRef.current = '';
       prevBebidaIdRef.current = '';
       prevPostreIdRef.current = '';
+      prevHeladoIdRef.current = '';
       setFoodTime('');
     }
 
@@ -511,35 +530,30 @@ export default function BookingForm({
   }, [postreId, selectedPackage]);
 
   useEffect(() => {
+    if (!heladoId) {
+      setHeladoPrice('');
+      prevHeladoIdRef.current = '';
+      return;
+    }
+    if (prevHeladoIdRef.current === heladoId) return;
+    const plate = selectedPackage?.plates?.find((p) => p.id === Number(heladoId));
+    if (plate) setHeladoPrice(String(plate.price_per_plate));
+    prevHeladoIdRef.current = heladoId;
+  }, [heladoId, selectedPackage]);
+
+  useEffect(() => {
     if (!selectedDecorationName) {
       setDecorationPrice('');
-      setDecorationThemeId('');
+      setDecorationDetail('');
       prevDecorationNameRef.current = '';
-      prevDecorationThemeIdRef.current = '';
       return;
     }
     if (prevDecorationNameRef.current === selectedDecorationName) return;
     const plate = decoracionPlates.find((p) => p.name === selectedDecorationName);
     if (plate) setDecorationPrice(String(plate.price_per_plate ?? 0));
-    if (!isBiomboTematicoName(selectedDecorationName)) {
-      setDecorationThemeId('');
-    }
+    setDecorationDetail('');
     prevDecorationNameRef.current = selectedDecorationName;
-    prevDecorationThemeIdRef.current = '';
   }, [selectedDecorationName, decoracionPlates]);
-
-  useEffect(() => {
-    if (!isBiomboTematicoSelected || !decorationThemeId) return;
-    if (prevDecorationThemeIdRef.current === decorationThemeId) return;
-    setDecorationPrice(String(computeBiomboDecorationPrice()));
-    prevDecorationThemeIdRef.current = decorationThemeId;
-  }, [
-    decorationThemeId,
-    isBiomboTematicoSelected,
-    selectedDecorationName,
-    decoracionPlates,
-    activeDecorationThemeOptions,
-  ]);
 
   const foodCost = quote?.foodCost ?? 0;
   const totalCost = quote?.totalCost ?? 0;
@@ -621,11 +635,21 @@ export default function BookingForm({
             {quote.extras?.postre && (
               <div className="cost-summary__row">
                 <span>
-                  Helado o postre: {quote.extras.postre.name} (
+                  Postre: {quote.extras.postre.name} (
                   {formatCurrency(quote.extras.postre.unitPrice ?? quote.extras.postre.price)} ×{' '}
                   {quote.extras.postre.attendees ?? attendees})
                 </span>
                 <span>{formatCurrency(quote.extras.postre.price)}</span>
+              </div>
+            )}
+            {quote.extras?.helado && (
+              <div className="cost-summary__row">
+                <span>
+                  Helado: {quote.extras.helado.name} (
+                  {formatCurrency(quote.extras.helado.unitPrice ?? quote.extras.helado.price)} ×{' '}
+                  {quote.extras.helado.attendees ?? attendees})
+                </span>
+                <span>{formatCurrency(quote.extras.helado.price)}</span>
               </div>
             )}
             {(quote.decorationCost > 0 || selectedDecorationName) && (
@@ -633,11 +657,8 @@ export default function BookingForm({
                 <span>
                   Decoración del local
                   {quote.decorationItems?.[0]?.name ? `: ${quote.decorationItems[0].name}` : ''}
-                  {quote.decorationItems?.[0]?.themeName
-                    ? ` — ${quote.decorationItems[0].themeName}`
-                    : ''}
-                  {quote.decorationItems?.[0]?.themeUnitPrice > 0
-                    ? ` (+ ${formatCurrency(quote.decorationItems[0].themeUnitPrice)})`
+                  {quote.decorationItems?.[0]?.detail
+                    ? ` — "${quote.decorationItems[0].detail}"`
                     : ''}
                 </span>
                 <span>{formatCurrency(quote.decorationCost ?? 0)}</span>
@@ -675,8 +696,9 @@ export default function BookingForm({
   const handlePrintQuote = () => {
     if (!quote || !venue || !selectedPackageName || !eventType) return;
 
-    const promoExtras = quote.promotionalExtras ?? [];
-    const html = buildQuoteDocument({
+    try {
+      const promoExtras = quote.promotionalExtras ?? [];
+      const html = buildQuoteDocument({
       local,
       title,
       eventType,
@@ -714,6 +736,8 @@ export default function BookingForm({
         ?.description,
       menuPostreName: selectedPackage?.plates?.find((p) => p.id === Number(postreId))?.name,
       menuPostrePrice: Number(postrePrice) || quote.extras?.postre?.unitPrice || 0,
+      menuHeladoName: selectedPackage?.plates?.find((p) => p.id === Number(heladoId))?.name,
+      menuHeladoPrice: Number(heladoPrice) || quote.extras?.helado?.unitPrice || 0,
       packageUnitPrice: quote.packageUnitPrice,
       baseLocalCost: quote.baseLocalCost,
       pricePerPerson: quote.pricePerPerson,
@@ -729,9 +753,13 @@ export default function BookingForm({
       notes,
       includesFood,
       extrasTerms: contractExtraTerms,
-    });
+      });
 
-    previewDocument(html, `Contrato — ${eventType}`, setDocumentPreview);
+      previewDocument(html, `Contrato — ${eventType}`, setDocumentPreview);
+    } catch (err) {
+      console.error(err);
+      alert('No se pudo generar la vista previa del contrato.');
+    }
   };
 
   const canPrintQuote =
@@ -779,10 +807,12 @@ export default function BookingForm({
       bebidaPrice: isPromoPackage ? undefined : bebidaId ? Number(bebidaPrice) || 0 : undefined,
       postreId: isPromoPackage ? undefined : postreId ? Number(postreId) : undefined,
       postrePrice: isPromoPackage ? undefined : postreId ? Number(postrePrice) || 0 : undefined,
+      heladoId: isPromoPackage ? undefined : heladoId ? Number(heladoId) : undefined,
+      heladoPrice: isPromoPackage ? undefined : heladoId ? Number(heladoPrice) || 0 : undefined,
       decorationIds: isPromoPackage ? undefined : selectedDecorationIds,
-      decorationThemeId:
-        !isPromoPackage && isBiomboTematicoSelected && decorationThemeId
-          ? Number(decorationThemeId)
+      decorationDetail:
+        !isPromoPackage && includesFood && selectedDecorationName
+          ? decorationDetail.trim()
           : undefined,
       decorationPrice: isPromoPackage
         ? undefined
@@ -810,14 +840,17 @@ export default function BookingForm({
     setEntradaId('');
     setBebidaId('');
     setPostreId('');
+    setHeladoId('');
     setEntradaPrice('');
     setBebidaPrice('');
     setPostrePrice('');
+    setHeladoPrice('');
     setUnitPrice('');
     prevPlateIdRef.current = '';
     prevEntradaIdRef.current = '';
     prevBebidaIdRef.current = '';
     prevPostreIdRef.current = '';
+    prevHeladoIdRef.current = '';
     setDepositAmount('');
     setPaymentMethod('efectivo');
     setOperationNumber('');
@@ -825,7 +858,7 @@ export default function BookingForm({
     setDecorationColors([]);
     setColorPickerExpanded(true);
     setSelectedDecorationName('');
-    setDecorationThemeId('');
+    setDecorationDetail('');
     setDecorationPrice('');
     prevDecorationNameRef.current = '';
     setNotes('');
@@ -1183,33 +1216,12 @@ export default function BookingForm({
 
               if (!options.length) return null;
 
-              const value =
-                section.category === 'entrada'
-                  ? entradaId
-                  : section.category === 'bebida'
-                    ? bebidaId
-                    : postreId;
+              const extraKey = getBookingExtraKey(section.category);
+              const extraState = extraKey ? menuExtraState[extraKey] : null;
+              if (!extraState) return null;
 
-              const onChange =
-                section.category === 'entrada'
-                  ? setEntradaId
-                  : section.category === 'bebida'
-                    ? setBebidaId
-                    : setPostreId;
-
-              const priceValue =
-                section.category === 'entrada'
-                  ? entradaPrice
-                  : section.category === 'bebida'
-                    ? bebidaPrice
-                    : postrePrice;
-
-              const onPriceChange =
-                section.category === 'entrada'
-                  ? setEntradaPrice
-                  : section.category === 'bebida'
-                    ? setBebidaPrice
-                    : setPostrePrice;
+              const { id: value, setId: onChange, price: priceValue, setPrice: onPriceChange } =
+                extraState;
 
               return (
                 <div
@@ -1380,25 +1392,17 @@ export default function BookingForm({
               </div>
               {selectedDecorationName && (
                 <>
-                  {isBiomboTematicoSelected && activeDecorationThemeOptions.length > 0 && (
-                    <div className="booking-field--plato-fondo">
-                      <label>
-                        <span className="item-badge item-badge--plato-fondo">Biombo temático</span>
-                        <select
-                          value={decorationThemeId}
-                          onChange={(e) => setDecorationThemeId(e.target.value)}
-                          required
-                          disabled={readOnly}
-                        >
-                          <option value="">Selecciona el tema</option>
-                          {activeDecorationThemeOptions.map((theme) => (
-                            <option key={theme.id} value={theme.id}>
-                              {formatThemeOptionLabel(theme)}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                    </div>
+                  {includesFood && (
+                    <label className="decoration-detail-field">
+                      {selectedDecorationName}
+                      <textarea
+                        rows={2}
+                        value={decorationDetail}
+                        onChange={(e) => setDecorationDetail(e.target.value)}
+                        placeholder="Detalle de la decoración elegida"
+                        disabled={readOnly}
+                      />
+                    </label>
                   )}
                   <label className="decoration-price-field">
                   Costo decoración (S/.)
