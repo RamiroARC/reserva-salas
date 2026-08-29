@@ -46,6 +46,10 @@ export const PACKAGE_MANAGER_SECTIONS = [
   { category: HELADO_CATEGORY, label: 'Helados', priceSuffix: '/persona' },
 ];
 
+export const BOOKING_BEBIDA_SECTIONS = BEBIDA_MANAGER_GROUP.sections.filter(
+  (section) => section.category !== BEBIDA_CORTESIA_CATEGORY
+);
+
 export const PACKAGE_MENU_SECTIONS = [
   { category: PLATO_FONDO_CATEGORY, label: 'Plato de fondo', required: true, perPerson: true },
   { category: 'entrada', label: 'Entrada', required: false, perPerson: true },

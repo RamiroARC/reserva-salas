@@ -5,7 +5,7 @@ import {
   serializeDecorationColors,
 } from '../../constants/decorationColors';
 import { isBookingLocked } from '../../constants/bookingStatus';
-import { BEBIDA_MANAGER_GROUP, PACKAGE_MENU_SECTIONS, formatPlateOptionLabel, getDecoracionPlates, parseDecorationItems } from '../../constants/packageMenu';
+import { BEBIDA_MANAGER_GROUP, BOOKING_BEBIDA_SECTIONS, PACKAGE_MENU_SECTIONS, formatPlateOptionLabel, getDecoracionPlates, parseDecorationItems } from '../../constants/packageMenu';
 import {
   getBookingExtraKey,
   isBebidaCategory,
@@ -290,7 +290,7 @@ export default function BookingForm({
   const optionalNonBebidaSections = optionalMenuSections.filter(
     (section) => !isBebidaCategory(section.category)
   );
-  const bebidaMenuSections = BEBIDA_MANAGER_GROUP.sections;
+  const bebidaMenuSections = BOOKING_BEBIDA_SECTIONS;
   const selectedBebidaPlate =
     selectedPackage?.plates?.find((plate) => plate.id === Number(bebidaId)) ?? null;
 
