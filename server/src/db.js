@@ -1,6 +1,7 @@
 import { JAZMINES } from './catalogs/jazminesCatalog.js';
 import { VENUE } from './catalogs/venue.js';
 import { seedDecorationThemeOptions } from './catalogs/decorationThemeOptionsCatalog.js';
+import { seedPackageIncludes } from './catalogs/packageIncludesCatalog.js';
 import { migrateMenuPlateCategories } from './migrations/migrateMenuCategories.js';
 import { seedLocalCatalogs } from './services/localSeed.js';
 import { hashPassword } from './services/password.js';
@@ -136,6 +137,13 @@ async function seedExistingLocalThemeOptions() {
   );
 }
 
+async function seedExistingLocalPackageIncludes() {
+  const rooms = await C('rooms').find({}).toArray();
+  for (const room of rooms) {
+    await seedPackageIncludes(room._id);
+  }
+}
+
 let initialized;
 
 export async function initDb() {
@@ -147,6 +155,7 @@ export async function initDb() {
     await migrateMenuPlateCategories();
     const companyId = await bootstrapEmptyDatabase();
     await seedExistingLocalThemeOptions();
+    await seedExistingLocalPackageIncludes();
     await bootstrapUsers(companyId);
     await C('companies').updateMany(
       {

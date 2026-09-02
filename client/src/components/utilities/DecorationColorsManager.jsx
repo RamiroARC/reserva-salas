@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { createDecorationColor, deleteDecorationColor } from '../../api';
+import CollapsibleUtilitySection from './CollapsibleUtilitySection';
 
 const emptyForm = {
   name: '',
@@ -53,15 +54,13 @@ export default function DecorationColorsManager({ colors, onRefresh }) {
   };
 
   return (
-    <section className="panel decoration-colors-panel">
-      <div className="panel__header">
-        <div>
-          <h2>Colores de decoración</h2>
-          <p className="form-hint">
-            {colors.length} color(es) disponibles para la sección «Color de decoración del local» en reservas.
-          </p>
-        </div>
-        {!showCreate && (
+    <CollapsibleUtilitySection
+      className="decoration-colors-panel"
+      title="Colores de decoración"
+      hint={`${colors.length} color(es) disponibles para la sección «Color de decoración del local» en reservas.`}
+      keepOpen={showCreate}
+      actions={
+        !showCreate ? (
           <button
             type="button"
             className="btn btn--secondary btn--sm"
@@ -70,9 +69,9 @@ export default function DecorationColorsManager({ colors, onRefresh }) {
           >
             + Nuevo color
           </button>
-        )}
-      </div>
-
+        ) : null
+      }
+    >
       {showCreate && (
         <div className="decoration-colors-form">
           <label>
@@ -151,6 +150,6 @@ export default function DecorationColorsManager({ colors, onRefresh }) {
       {!colors.length && !showCreate && (
         <p className="form-hint">No hay colores registrados. Agrega el primero con el botón superior.</p>
       )}
-    </section>
+    </CollapsibleUtilitySection>
   );
 }

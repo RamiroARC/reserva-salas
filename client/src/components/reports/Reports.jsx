@@ -20,6 +20,7 @@ export default function Reports({
   bookings,
   local,
   contractExtraTerms = [],
+  packageIncludeItems = [],
   statusFilter,
   onStatusFilterChange,
   dateFrom,
@@ -64,6 +65,7 @@ export default function Reports({
         ...mapBookingToContractData(detail),
         local,
         extrasTerms: contractExtraTerms,
+        packageIncludeItems,
       });
       previewDocument(
         html,

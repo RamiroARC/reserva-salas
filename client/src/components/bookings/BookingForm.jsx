@@ -14,7 +14,7 @@ import {
 } from '../../constants/menuCategories';
 import { PAYMENT_METHODS } from '../../constants/paymentTypes';
 import { isPlatoFondoIncludeText, parsePromotionalExtras } from '../../constants/promotionalPackages';
-import { buildQuoteDocument, previewDocument } from '../../utils/printDocuments';
+import { buildContractDocument, previewDocument } from '../../utils/printDocuments';
 import DocumentPreview from '../shared/DocumentPreview';
 import BookingAttachments from './BookingAttachments';
 import DecorationColorFan from '../utilities/DecorationColorFan';
@@ -53,6 +53,7 @@ export default function BookingForm({
   promotionalOptionalItems = [],
   decorationColorOptions = [],
   contractExtraTerms = [],
+  packageIncludeItems = [],
   selectedDate,
   booking,
   onSubmit,
@@ -738,63 +739,63 @@ export default function BookingForm({
 
     try {
       const promoExtras = quote.promotionalExtras ?? [];
-      const html = buildQuoteDocument({
-      local,
-      title,
-      eventType,
-      organizer,
-      clientDni,
-      clientPhone,
-      clientPhone2,
-      clientEmail,
-      eventDate: selectedDate,
-      startTime,
-      endTime,
-      foodTime: includesFood ? foodTime : '',
-      roomName: venue.name,
-      packageName: selectedPackageName,
-      attendees: Number(attendees),
-      isPromotional: isPromoPackage,
-      promotionalDescription: selectedPromoPackage?.description ?? '',
-      promotionalIncludes:
-        selectedPromoPackage?.includes ?? quote.promotionalIncludes ?? [],
-      promotionalExtras: promoExtras,
-      menuPlateName: isPromoPackage
-        ? selectedPromoPlatoFondo?.name
-        : selectedPlate?.name,
-      menuPlateDescription: isPromoPackage ? undefined : selectedPlate?.description ?? '',
-      platePrice: Number(unitPrice) || quote.packageUnitPrice,
-      menuEntradaName: isPromoPackage
-        ? undefined
-        : selectedPackage?.plates?.find((p) => p.id === Number(entradaId))?.name,
-      menuEntradaPrice: isPromoPackage
-        ? undefined
-        : Number(entradaPrice) || quote.extras?.entrada?.unitPrice || 0,
-      menuBebidaName: selectedPackage?.plates?.find((p) => p.id === Number(bebidaId))?.name,
-      menuBebidaPrice: Number(bebidaPrice) || quote.extras?.bebida?.unitPrice || 0,
-      menuBebidaDetail: bebidaDetail.trim(),
-      menuBebidaPricingMode: quote.extras?.bebida?.pricingMode ?? null,
-      menuBebidaDescription: selectedPackage?.plates?.find((p) => p.id === Number(bebidaId))
-        ?.description,
-      menuPostreName: selectedPackage?.plates?.find((p) => p.id === Number(postreId))?.name,
-      menuPostrePrice: Number(postrePrice) || quote.extras?.postre?.unitPrice || 0,
-      menuHeladoName: selectedPackage?.plates?.find((p) => p.id === Number(heladoId))?.name,
-      menuHeladoPrice: Number(heladoPrice) || quote.extras?.helado?.unitPrice || 0,
-      packageUnitPrice: quote.packageUnitPrice,
-      baseLocalCost: quote.baseLocalCost,
-      pricePerPerson: quote.pricePerPerson,
-      rentalCost: quote.rentalCost,
-      foodCost,
-      totalCost,
-      depositAmount: Number(depositAmount) || 0,
-      balance: Math.max(balance, 0),
-      guaranteeAmount: Number(guaranteeAmount) || 0,
-      decorationColor: serializeDecorationColors(decorationColors),
-      decorationItems: isPromoPackage ? [] : quote.decorationItems ?? [],
-      decorationCost: isPromoPackage ? 0 : quote.decorationCost ?? 0,
-      notes,
-      includesFood,
-      extrasTerms: contractExtraTerms,
+      const html = buildContractDocument({
+        local,
+        title,
+        eventType,
+        organizer,
+        clientDni,
+        clientPhone,
+        clientPhone2,
+        startTime: combineDateAndTime(selectedDate, startTime),
+        endTime: combineDateAndTime(selectedDate, endTime),
+        foodTime: includesFood ? foodTime : '',
+        includesFood,
+        isPromotional: isPromoPackage,
+        packageType: isPromoPackage ? 'promotional' : includesFood ? 'con_banquete' : 'solo_alquiler',
+        roomName: venue.name,
+        packageName: selectedPackageName,
+        attendees: Number(attendees),
+        promotionalDescription: selectedPromoPackage?.description ?? '',
+        promotionalIncludes:
+          selectedPromoPackage?.includes ?? quote.promotionalIncludes ?? [],
+        promotionalExtras: promoExtras,
+        menuPlateName: isPromoPackage
+          ? selectedPromoPlatoFondo?.name
+          : selectedPlate?.name,
+        menuPlateDescription: isPromoPackage ? undefined : selectedPlate?.description ?? '',
+        platePrice: Number(unitPrice) || quote.packageUnitPrice,
+        menuEntradaName: isPromoPackage
+          ? undefined
+          : selectedPackage?.plates?.find((p) => p.id === Number(entradaId))?.name,
+        menuEntradaPrice: isPromoPackage
+          ? undefined
+          : Number(entradaPrice) || quote.extras?.entrada?.unitPrice || 0,
+        menuBebidaName: selectedPackage?.plates?.find((p) => p.id === Number(bebidaId))?.name,
+        menuBebidaPrice: Number(bebidaPrice) || quote.extras?.bebida?.unitPrice || 0,
+        menuBebidaDetail: bebidaDetail.trim(),
+        menuBebidaPricingMode: quote.extras?.bebida?.pricingMode ?? null,
+        menuBebidaDescription: selectedPackage?.plates?.find((p) => p.id === Number(bebidaId))
+          ?.description,
+        menuPostreName: selectedPackage?.plates?.find((p) => p.id === Number(postreId))?.name,
+        menuPostrePrice: Number(postrePrice) || quote.extras?.postre?.unitPrice || 0,
+        menuHeladoName: selectedPackage?.plates?.find((p) => p.id === Number(heladoId))?.name,
+        menuHeladoPrice: Number(heladoPrice) || quote.extras?.helado?.unitPrice || 0,
+        packageUnitPrice: quote.packageUnitPrice,
+        baseLocalCost: quote.baseLocalCost,
+        pricePerPerson: quote.pricePerPerson,
+        rentalCost: quote.rentalCost,
+        foodCost,
+        totalCost,
+        depositAmount: Number(depositAmount) || 0,
+        balanceDue: Math.max(balance, 0),
+        guaranteeAmount: Number(guaranteeAmount) || 0,
+        decorationColor: serializeDecorationColors(decorationColors),
+        decorationItems: isPromoPackage ? [] : quote.decorationItems ?? [],
+        decorationCost: isPromoPackage ? 0 : quote.decorationCost ?? 0,
+        notes,
+        extrasTerms: contractExtraTerms,
+        packageIncludeItems,
       });
 
       previewDocument(html, `Contrato — ${eventType}`, setDocumentPreview);
@@ -804,8 +805,13 @@ export default function BookingForm({
     }
   };
 
-  const canPrintQuote =
-    quote && venue && selectedPackageName && organizer.trim() && eventType;
+  const canPrintContract =
+    isEditing &&
+    quote &&
+    venue &&
+    selectedPackageName &&
+    organizer.trim() &&
+    eventType;
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -1561,6 +1567,14 @@ export default function BookingForm({
           )}
         </div>
 
+        <BookingAttachments
+          attachments={attachments}
+          onChange={onAttachmentsChange}
+          onUpload={onAttachmentUpload}
+          readOnly={attachmentsReadOnly || readOnly}
+          uploading={attachmentsUploading}
+        />
+
         <div className="booking-form__row">
           <label>
             Adelanto
@@ -1647,28 +1661,22 @@ export default function BookingForm({
           />
         </label>
 
-        <BookingAttachments
-          attachments={attachments}
-          onChange={onAttachmentsChange}
-          onUpload={onAttachmentUpload}
-          readOnly={attachmentsReadOnly || readOnly}
-          uploading={attachmentsUploading}
-        />
-
         {renderCostSummary()}
 
         </fieldset>
 
         {!readOnly && (
         <div className="form-actions">
-          <button
-            type="button"
-            className="btn btn--secondary"
-            onClick={handlePrintQuote}
-            disabled={!canPrintQuote || quoting}
-          >
-            Contrato preliminar
-          </button>
+          {isEditing && (
+            <button
+              type="button"
+              className="btn btn--secondary"
+              onClick={handlePrintQuote}
+              disabled={!canPrintContract || quoting}
+            >
+              Contrato
+            </button>
+          )}
           <button type="submit" className="btn btn--primary" disabled={loading || quoting}>
             {loading
               ? isEditing

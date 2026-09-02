@@ -12,6 +12,7 @@ import {
   fetchPromotionalOptionalItems,
   fetchDecorationColors,
   fetchContractExtraTerms,
+  fetchPackageIncludes,
   fetchProjections,
   fetchSeasons,
   fetchVenue,
@@ -54,9 +55,9 @@ import { FAB, Navigation, Progress, Snackbar } from './design-system';
 
 const BASE_TABS = [
   { id: 'reservas', label: 'Reservas' },
-  { id: 'reportes', label: 'Reportes' },
   { id: 'paquetes', label: 'Paquetes' },
   { id: 'paquetes-promo', label: 'Paquetes Promocionales' },
+  { id: 'reportes', label: 'Reportes' },
   { id: 'utilitarios', label: 'Utilitarios' },
   { id: 'proyecciones', label: 'Proyecciones' },
 ];
@@ -116,6 +117,7 @@ function Workspace() {
   const [promotionalOptionalItems, setPromotionalOptionalItems] = useState([]);
   const [decorationColorCatalog, setDecorationColorCatalog] = useState([]);
   const [contractExtraTerms, setContractExtraTerms] = useState([]);
+  const [packageIncludes, setPackageIncludes] = useState([]);
   const [seasons, setSeasons] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [reportBookings, setReportBookings] = useState([]);
@@ -143,6 +145,7 @@ function Workspace() {
       promoOptionalData,
       decorationColorsData,
       contractExtraTermsData,
+      packageIncludesData,
       bookingsData,
     ] = await Promise.all([
       fetchVenue(),
@@ -153,6 +156,7 @@ function Workspace() {
       fetchPromotionalOptionalItems(),
       fetchDecorationColors(),
       fetchContractExtraTerms().catch(() => []),
+      fetchPackageIncludes().catch(() => []),
       fetchBookings({
         status: statusFilter || undefined,
         date: calendarDateFilter || undefined,
@@ -168,6 +172,7 @@ function Workspace() {
     setPromotionalOptionalItems(promoOptionalData);
     setDecorationColorCatalog(buildDecorationColorCatalog(decorationColorsData));
     setContractExtraTerms(contractExtraTermsData);
+    setPackageIncludes(packageIncludesData);
     setBookings(bookingsData);
     setCalendarRefreshKey((key) => key + 1);
   }, [statusFilter, calendarDateFilter]);
@@ -221,6 +226,10 @@ function Workspace() {
     setContractExtraTerms(await fetchContractExtraTerms());
   }, []);
 
+  const loadPackageIncludes = useCallback(async () => {
+    setPackageIncludes(await fetchPackageIncludes());
+  }, []);
+
   const loadPromotionalData = useCallback(async () => {
     await loadPromotionalCatalog();
   }, [loadPromotionalCatalog]);
@@ -238,21 +247,23 @@ function Workspace() {
       if (activeTab === 'proyecciones') {
         await loadProjections();
       } else if (activeTab === 'reportes') {
-        const [venueData, packagesData, termsData] = await Promise.all([
+        const [venueData, packagesData, termsData, includesData] = await Promise.all([
           fetchVenue(),
           fetchPackages(),
           fetchContractExtraTerms().catch(() => []),
+          fetchPackageIncludes().catch(() => []),
         ]);
 
         setVenue(venueData);
         setPackages(packagesData);
         setContractExtraTerms(termsData);
+        setPackageIncludes(includesData);
 
         await loadReportBookings();
       } else if (activeTab === 'paquetes-promo') {
         await loadPromotionalData();
       } else if (activeTab === 'utilitarios') {
-        await Promise.all([loadDecorationColors(), loadContractExtraTerms()]);
+        await Promise.all([loadDecorationColors(), loadContractExtraTerms(), loadPackageIncludes()]);
       } else if (activeTab === 'paquetes') {
         const [packagesData, seasonsData] = await Promise.all([
           fetchPackages(),
@@ -276,6 +287,7 @@ function Workspace() {
     loadPromotionalData,
     loadDecorationColors,
     loadContractExtraTerms,
+    loadPackageIncludes,
     loadReportBookings,
   ]);
 
@@ -358,8 +370,12 @@ function Workspace() {
     try {
       const created = await createBooking(payload);
       await syncPendingAttachments(created.id, formAttachments);
+      const detail = await fetchBooking(created.id);
+      setEditingBooking(detail);
+      setFormAttachments(parseBookingAttachments(detail.attachments));
+      setFormDate(isoToDateInput(detail.start_time));
+      setShowNewBooking(false);
       setMessage('Reserva registrada correctamente.');
-      closeFormView();
       await loadBookingsData();
     } catch (err) {
       setError(err.message);
@@ -523,6 +539,7 @@ function Workspace() {
                   promotionalOptionalItems={promotionalOptionalItems}
                   decorationColorOptions={decorationColorCatalog}
                   contractExtraTerms={contractExtraTerms}
+                  packageIncludeItems={packageIncludes}
                   selectedDate={formDate}
                   booking={editingBooking}
                   onSubmit={editingBooking ? handleUpdateBooking : handleCreateBooking}
@@ -577,6 +594,7 @@ function Workspace() {
               bookings={bookings}
               local={activeLocal}
               contractExtraTerms={contractExtraTerms}
+              packageIncludeItems={packageIncludes}
               onStatusChange={handleStatusChange}
               updatingStatusId={updatingStatusId}
               onPaymentAdded={loadBookingsData}
@@ -592,6 +610,7 @@ function Workspace() {
           bookings={reportBookings}
           local={activeLocal}
           contractExtraTerms={contractExtraTerms}
+          packageIncludeItems={packageIncludes}
           statusFilter={reportStatusFilter}
           onStatusFilterChange={setReportStatusFilter}
           dateFrom={reportDateFrom}
@@ -618,6 +637,8 @@ function Workspace() {
           onRefreshDecorationColors={loadDecorationColors}
           contractExtraTerms={contractExtraTerms}
           onRefreshContractExtraTerms={loadContractExtraTerms}
+          packageIncludes={packageIncludes}
+          onRefreshPackageIncludes={loadPackageIncludes}
         />
       ) : (
         <Projections data={projections} year={projectionYear} onYearChange={setProjectionYear} />

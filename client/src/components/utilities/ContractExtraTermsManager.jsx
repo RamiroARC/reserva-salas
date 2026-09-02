@@ -4,6 +4,7 @@ import {
   deleteContractExtraTerm,
   updateContractExtraTerm,
 } from '../../api';
+import CollapsibleUtilitySection from './CollapsibleUtilitySection';
 
 const emptyForm = {
   content: '',
@@ -88,17 +89,13 @@ export default function ContractExtraTermsManager({ terms, onRefresh }) {
   };
 
   return (
-    <section className="panel contract-extra-terms-panel">
-      <div className="panel__header">
-        <div>
-          <h2>Disposiciones extras</h2>
-          <p className="form-hint">
-            Texto que aparece en cotizaciones y contratos bajo «Disposiciones extras».
-            {' '}
-            {terms.length} párrafo(s) registrado(s).
-          </p>
-        </div>
-        {!showCreate && !editingId && (
+    <CollapsibleUtilitySection
+      className="contract-extra-terms-panel"
+      title="Disposiciones extras"
+      hint={`Texto que aparece en cotizaciones y contratos bajo «Disposiciones extras». ${terms.length} párrafo(s) registrado(s).`}
+      keepOpen={showCreate || Boolean(editingId)}
+      actions={
+        !showCreate && !editingId ? (
           <button
             type="button"
             className="btn btn--secondary btn--sm"
@@ -107,9 +104,9 @@ export default function ContractExtraTermsManager({ terms, onRefresh }) {
           >
             + Nueva disposición
           </button>
-        )}
-      </div>
-
+        ) : null
+      }
+    >
       {showCreate && (
         <div className="contract-extra-terms-form">
           <label>
@@ -220,6 +217,6 @@ export default function ContractExtraTermsManager({ terms, onRefresh }) {
           No hay disposiciones registradas. Agrega el texto que debe aparecer en contratos.
         </p>
       )}
-    </section>
+    </CollapsibleUtilitySection>
   );
 }

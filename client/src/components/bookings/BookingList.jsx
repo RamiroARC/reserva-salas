@@ -38,6 +38,7 @@ export default function BookingList({
   bookings,
   local,
   contractExtraTerms = [],
+  packageIncludeItems = [],
   onStatusChange,
   updatingStatusId,
   onPaymentAdded,
@@ -87,8 +88,9 @@ export default function BookingList({
         ...mapBookingToContractData(detail),
         local,
         extrasTerms: contractExtraTerms,
+        packageIncludeItems,
       });
-      previewDocument(html, `Contrato — ${local?.name ?? detail.room_name}`, setDocumentPreview);
+      previewDocument(html, `Contrato — ${detail.event_type || detail.title}`, setDocumentPreview);
     } catch (err) {
       console.error(err);
       alert('No se pudo generar la vista previa del contrato.');

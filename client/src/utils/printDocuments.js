@@ -8,6 +8,7 @@ import {
 } from '../constants/paymentTypes';
 import { getStatusLabel } from '../constants/bookingStatus';
 import { buildContractExtrasTermsHtml } from '../constants/contractExtraTerms';
+import { buildPackageIncludesSectionHtml } from '../constants/packageIncludes';
 import { resolveBranding } from '../constants/branding';
 import { MENU_CATALOG } from '../data/jazminesCatalog';
 import { parseDecorationItems } from '../constants/packageMenu';
@@ -29,12 +30,18 @@ function todayShort() {
 function documentHeaderStyles() {
   return `
     .doc-header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
+      width: 100%;
+      border-collapse: collapse;
       margin-bottom: 10px;
-      padding-bottom: 8px;
       border-bottom: 1px solid #ccc;
+    }
+    .doc-header td {
+      vertical-align: middle;
+      padding: 0 0 8px;
+    }
+    .doc-header__logo-cell {
+      width: 118px;
+      padding-right: 12px;
     }
     .doc-header__logo {
       display: block;
@@ -43,7 +50,6 @@ function documentHeaderStyles() {
       max-width: 110px;
       object-fit: contain;
       object-position: left center;
-      flex-shrink: 0;
     }
     .doc-header__text {
       min-width: 0;
@@ -66,13 +72,24 @@ function documentHeaderStyles() {
 
 function renderDocumentHeader(bannerUrl) {
   return `
-  <div class="doc-header">
-    <img class="doc-header__logo" src="${bannerUrl}" alt="Los Jazmines" />
-    <div class="doc-header__text">
-      <strong class="doc-header__brand">Los Jazmines</strong>
-      <span class="doc-header__tagline">Eventos y recepciones</span>
-    </div>
-  </div>`;
+  <table class="doc-header" role="presentation" cellpadding="0" cellspacing="0" width="100%" style="width:100%;border-collapse:collapse;margin-bottom:10px;border-bottom:1px solid #ccc">
+    <tr>
+      <td style="width:118px;vertical-align:middle;padding:0 12px 8px 0">
+        <img
+          class="doc-header__logo"
+          src="${bannerUrl}"
+          alt="Los Jazmines"
+          width="110"
+          height="48"
+          style="display:block;height:48px;width:110px;max-width:110px;object-fit:contain;object-position:left center"
+        />
+      </td>
+      <td style="vertical-align:middle;padding:0 0 8px">
+        <strong class="doc-header__brand">Los Jazmines</strong>
+        <span class="doc-header__tagline">Eventos y recepciones</span>
+      </td>
+    </tr>
+  </table>`;
 }
 
 function jazminesPrintStyles() {
@@ -84,8 +101,8 @@ function jazminesPrintStyles() {
       line-height: 1.35;
       color: #000;
       padding: 18px 22px;
-      width: 210mm;
-      max-width: 210mm;
+      width: 794px;
+      max-width: 794px;
       margin: 0 auto;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
@@ -109,13 +126,11 @@ function jazminesPrintStyles() {
     .fill--wide { min-width: 280px; }
     .fill--short { min-width: 60px; }
     .row-2 {
-      display: table;
       width: 100%;
-      table-layout: fixed;
+      border-collapse: collapse;
       margin-bottom: 6px;
     }
-    .row-2 > span {
-      display: table-cell;
+    .row-2 td {
       vertical-align: top;
       padding-right: 12px;
     }
@@ -149,23 +164,23 @@ function jazminesPrintStyles() {
     .includes, .terms {
       font-size: 10px;
       text-align: justify;
+      page-break-inside: avoid;
     }
     .includes li, .deco-list li { margin-bottom: 2px; margin-left: 16px; }
     .payments {
       margin: 12px 0;
       font-size: 12px;
       font-weight: bold;
+      page-break-inside: avoid;
     }
     .payments span { margin-right: 24px; }
     .signatures {
-      display: table;
       width: 100%;
-      table-layout: fixed;
+      border-collapse: collapse;
       margin-top: 28px;
       page-break-inside: avoid;
     }
     .sig-block {
-      display: table-cell;
       width: 50%;
       text-align: center;
       font-size: 10px;
@@ -187,40 +202,41 @@ function jazminesPrintStyles() {
       margin: 8px 0 10px;
     }
     .contract-menu-item {
-      display: table;
+      display: grid;
+      grid-template-columns: 50% 50%;
+      align-items: start;
       width: 100%;
-      table-layout: fixed;
-      margin-bottom: 5px;
-      padding-left: 8px;
+      margin: 0 0 5px 8px;
       page-break-inside: avoid;
+    }
+    .contract-menu-item__left {
+      display: flex;
+      align-items: flex-start;
+      min-width: 0;
+      padding-right: 8px;
+    }
+    .contract-menu-item__label {
+      width: 118px;
+      flex: 0 0 118px;
+      padding-right: 8px;
+    }
+    .contract-menu-item__content {
+      flex: 1 1 auto;
+      min-width: 0;
+      word-break: break-word;
+    }
+    .contract-menu-item__amount {
+      text-align: left;
+      font-weight: bold;
+      font-size: 10px;
+      line-height: 1.35;
+      padding-left: 8px;
     }
     .contract-menu-section-title {
       padding-left: 8px;
       margin: 8px 0 4px;
       font-weight: bold;
       text-decoration: underline;
-    }
-    .contract-menu-item__label {
-      display: table-cell;
-      width: 118px;
-      vertical-align: top;
-      padding-right: 8px;
-    }
-    .contract-menu-item__content {
-      display: table-cell;
-      vertical-align: top;
-      padding-right: 8px;
-      word-break: break-word;
-    }
-    .contract-menu-item__amount {
-      display: table-cell;
-      width: 178px;
-      vertical-align: top;
-      text-align: right;
-      font-weight: bold;
-      font-size: 10px;
-      line-height: 1.35;
-      white-space: nowrap;
     }
     .contract-menu-block .section-title {
       padding-left: 8px;
@@ -266,17 +282,37 @@ function isHeladoItem(name) {
   return /helado/i.test(String(name ?? ''));
 }
 
-function renderContractItemLine(label, name, priceLabel, { quoted = true, complimentary = false } = {}) {
+function renderRow2(cells) {
+  const tds = cells.map((cell) => `<td style="vertical-align:top;padding-right:12px">${cell}</td>`).join('');
+  return `<table class="row-2 line" role="presentation" cellpadding="0" cellspacing="0" width="100%" style="width:100%;border-collapse:collapse;margin-bottom:6px"><tr>${tds}</tr></table>`;
+}
+
+const CONTRACT_LINE_STYLE =
+  'display:grid;grid-template-columns:50% 50%;align-items:start;width:100%;margin:0 0 5px 8px';
+const CONTRACT_LEFT_STYLE = 'display:flex;align-items:flex-start;min-width:0;padding-right:8px';
+const CONTRACT_LABEL_STYLE = 'width:118px;flex:0 0 118px;padding-right:8px';
+const CONTRACT_CONTENT_STYLE = 'flex:1 1 auto;min-width:0;word-break:break-word';
+const CONTRACT_AMOUNT_STYLE =
+  'text-align:left;font-weight:bold;font-size:10px;line-height:1.35;padding-left:8px';
+
+function renderContractItemLine(
+  label,
+  name,
+  priceLabel,
+  { quoted = true, complimentary = false, offerLabel = false } = {}
+) {
   if (!name?.trim() && !complimentary) return '';
 
   const displayName = name?.trim() || '';
   const namePart = quoted && displayName ? `"${displayName}"` : displayName;
-  const amount = complimentary ? 'Cortesía' : priceLabel || '';
+  const amount = complimentary ? (offerLabel ? 'Oferta' : 'Cortesía') : priceLabel || '';
 
-  return `<div class="contract-menu-item">
-    <span class="contract-menu-item__label"><strong>${label}</strong></span>
-    <span class="contract-menu-item__content">${namePart}</span>
-    <span class="contract-menu-item__amount">${amount}</span>
+  return `<div class="contract-menu-item" style="${CONTRACT_LINE_STYLE}">
+    <div class="contract-menu-item__left" style="${CONTRACT_LEFT_STYLE}">
+      <div class="contract-menu-item__label" style="${CONTRACT_LABEL_STYLE}"><strong>${label}</strong></div>
+      <div class="contract-menu-item__content" style="${CONTRACT_CONTENT_STYLE}">${namePart}</div>
+    </div>
+    <div class="contract-menu-item__amount" style="${CONTRACT_AMOUNT_STYLE}">${amount}</div>
   </div>`;
 }
 
@@ -293,10 +329,15 @@ function renderContractDecorationSection(decorationColor, decorationItems = []) 
   }
 
   for (const item of selected) {
+    const itemName = item.name?.trim();
+    if (!itemName) continue;
+
     const detail = item.detail?.trim();
-    const displayText = detail || item.name;
+    const description = item.description?.trim();
+    const displayText = detail || description || '';
+    const label = `${itemName}:`;
     const priceStr = item.price > 0 ? formatSoles(item.price) : '';
-    html += renderContractItemLine('Extras de decoración:', displayText, priceStr);
+    html += renderContractItemLine(label, displayText, priceStr, { quoted: Boolean(displayText) });
   }
 
   return html;
@@ -345,7 +386,22 @@ function renderContractMenuDetails(data) {
 
   if (brindisItem?.name) {
     sections.push(
-      renderContractItemLine('Brindis:', brindisItem.name, '', { complimentary: true })
+      renderContractItemLine(
+        'Brindis:',
+        `${brindisItem.name} (Por asistente)`,
+        '',
+        { complimentary: true, offerLabel: true }
+      )
+    );
+  }
+
+  if (menuEntradaName?.trim()) {
+    sections.push(
+      renderContractItemLine(
+        'Entrada:',
+        menuEntradaName,
+        formatMenuItemPrice(menuEntradaName, menuEntradaPrice, null, attendees, true)
+      )
     );
   }
 
@@ -358,6 +414,13 @@ function renderContractMenuDetails(data) {
       )
     );
   }
+
+  sections.push(
+    renderContractItemLine('Chicha:', 'Una Jarra por mesa', '', {
+      complimentary: true,
+      offerLabel: true,
+    })
+  );
 
   if (menuBebidaName?.trim()) {
     const detailText = menuBebidaDetail?.trim();
@@ -388,16 +451,6 @@ function renderContractMenuDetails(data) {
     );
   }
 
-  if (menuEntradaName?.trim()) {
-    sections.push(
-      renderContractItemLine(
-        'Entrada:',
-        menuEntradaName,
-        formatMenuItemPrice(menuEntradaName, menuEntradaPrice, null, attendees, true)
-      )
-    );
-  }
-
   if (menuPostreName?.trim()) {
     sections.push(
       renderContractItemLine(
@@ -422,7 +475,9 @@ function renderContractMenuDetails(data) {
   if (decorationSection) sections.push(decorationSection);
 
   const body = sections.filter(Boolean).join('');
-  return body ? `<div class="contract-menu-block">${body}</div>` : '';
+  return body
+    ? `<div class="contract-menu-block"><div class="section-title">Detalle de Precios:</div>${body}</div>`
+    : '';
 }
 
 function renderPromotionalPackageContent({
@@ -514,6 +569,7 @@ function buildJazminesBody(data, docType) {
     promotionalIncludes,
     promotionalExtras,
     extrasTerms,
+    packageIncludeItems,
   } = data;
 
   const brand = resolveBranding(data.local);
@@ -521,30 +577,6 @@ function buildJazminesBody(data, docType) {
   const isQuote = docType === 'quote';
   const docTitle = isQuote ? 'CONTRATO' : `CONTRATO ${brand.year}`;
   const bannerUrl = data.bannerUrl || brand.bannerUrl;
-  const pricingNotes = isPromoPackage
-    ? [
-        data.pricePerPerson && packageUnitPrice != null && attendees
-          ? `Paquete promocional: ${formatSoles(packageUnitPrice)}/persona × ${attendees} = ${formatSoles(baseLocalCost ?? rentalCost)}`
-          : packageUnitPrice != null && attendees
-            ? `Paquete promocional: ${formatSoles(baseLocalCost ?? rentalCost)}`
-            : null,
-        foodCost > 0 ? `Extras adicionales: ${formatSoles(foodCost)}` : null,
-      ]
-        .filter(Boolean)
-        .join(' · ')
-    : [
-        includesFood && menuPlateName?.trim() && packageUnitPrice != null && attendees
-          ? `Plato de fondo: ${menuPlateName.trim()} — ${formatSoles(packageUnitPrice)}/persona × ${attendees} = ${formatSoles(baseLocalCost ?? rentalCost)}`
-          : data.pricePerPerson && packageUnitPrice != null && attendees
-            ? `Paquete: ${formatSoles(packageUnitPrice)}/persona × ${attendees} = ${formatSoles(baseLocalCost ?? rentalCost)}`
-            : packageUnitPrice != null
-              ? `Paquete solo local: ${formatSoles(baseLocalCost ?? packageUnitPrice)}`
-              : null,
-        foodCost > 0 ? `Extras de banquete: ${formatSoles(foodCost)}` : null,
-        data.decorationCost > 0 ? `Decoración adicional: ${formatSoles(data.decorationCost)}` : null,
-      ]
-        .filter(Boolean)
-        .join(' · ');
 
   const contractMenuSection = renderContractMenuDetails({
     includesFood,
@@ -572,11 +604,7 @@ function buildJazminesBody(data, docType) {
 
   const defaultIncludesSection = isPromoPackage
     ? ''
-    : `
-  <div class="section-title">Paquete incluye</div>
-  <ul class="includes">
-    ${brand.packageIncludes.map((item) => `<li>${item}</li>`).join('')}
-  </ul>`;
+    : buildPackageIncludesSectionHtml(packageIncludeItems, brand.packageIncludes);
 
   return `<!DOCTYPE html>
 <html lang="es">
@@ -594,29 +622,30 @@ function buildJazminesBody(data, docType) {
     <span class="fill fill--wide">${organizer || ''}</span>
   </div>
 
-  <div class="row-2 line">
-    <span><strong>Tipo de Evento:</strong> <span class="fill">${eventType || title || ''}</span></span>
-    <span><strong>Fecha:</strong> <span class="fill fill--short">${formatDateShort(eventDate)}</span></span>
-  </div>
+  ${renderRow2([
+    `<strong>Tipo de Evento:</strong> <span class="fill">${eventType || title || ''}</span>`,
+    `<strong>Fecha:</strong> <span class="fill fill--short">${formatDateShort(eventDate)}</span>`,
+  ])}
 
-  <div class="row-2 line">
-    <span><strong>Hora de Inicio:</strong> <span class="fill fill--short">${startTime || '……'} Hrs.</span></span>
-    <span><strong>Hora de fin:</strong> <span class="fill fill--short">${endTime || '……'} Hrs.</span></span>
-    ${includesFood ? `<span><strong>Hora de la comida:</strong> <span class="fill fill--short">${foodTime || '……'} Hrs.</span></span>` : ''}
-  </div>
+  ${renderRow2([
+    `<strong>Hora de Inicio:</strong> <span class="fill fill--short">${startTime || '……'} Hrs.</span>`,
+    `<strong>Hora de fin:</strong> <span class="fill fill--short">${endTime || '……'} Hrs.</span>`,
+    ...(includesFood
+      ? [`<strong>Hora de la comida:</strong> <span class="fill fill--short">${foodTime || '……'} Hrs.</span>`]
+      : []),
+  ])}
 
-  <div class="row-2 line">
-    <span><strong>Número de asistentes:</strong> <span class="fill fill--short">${attendees ?? ''} Personas</span></span>
-    <span><strong>No. de teléfono de contacto:</strong> <span class="fill">${[clientPhone, clientPhone2].filter(Boolean).join(' / ') || ''}</span></span>
-  </div>
+  ${renderRow2([
+    `<strong>Número de asistentes:</strong> <span class="fill fill--short">${attendees ?? ''} Personas</span>`,
+    `<strong>No. de teléfono de contacto:</strong> <span class="fill">${[clientPhone, clientPhone2].filter(Boolean).join(' / ') || ''}</span>`,
+  ])}
 
   <div class="line">
     <strong>Local:</strong> <span class="fill">${roomName || brand.name}</span>
     &nbsp;&nbsp;
     <strong>Tipo PAQUETE DE:</strong> <span class="fill fill--wide">${packageName || ''}</span>
-    <strong>Precio local:</strong> ${formatSoles(rentalCost)}
+    <strong>Precio Total:</strong> <span class="fill fill--short">${formatSoles(totalCost)}</span>
   </div>
-  ${pricingNotes ? `<div class="line"><strong>Detalle de precio:</strong> ${pricingNotes}</div>` : ''}
 
   ${contractMenuSection}
   ${defaultIncludesSection}
@@ -635,20 +664,22 @@ function buildJazminesBody(data, docType) {
 
   ${isQuote ? `<p class="terms" style="margin-top:8px;font-style:italic">Documento preliminar sujeto a disponibilidad del local. Válido por 7 días calendario.</p>` : ''}
 
-  <div class="signatures">
-    <div class="sig-block">
-      <div class="sig-line">Firma:</div>
-      <div><strong>${brand.ownerName}</strong></div>
-      <div>DNI N° ${brand.ownerDni}</div>
-      <div>Hz. ${todayShort()}</div>
-    </div>
-    <div class="sig-block">
-      <div class="sig-line">Firma:</div>
-      <div><strong>${organizer || ''}</strong></div>
-      <div>DNI N° ${clientDni || ''}</div>
-      <div>Hz. ${todayShort()}</div>
-    </div>
-  </div>
+  <table class="signatures" role="presentation" cellpadding="0" cellspacing="0">
+    <tr>
+      <td class="sig-block">
+        <div class="sig-line">Firma:</div>
+        <div><strong>${brand.ownerName}</strong></div>
+        <div>DNI N° ${brand.ownerDni}</div>
+        <div>Hz. ${todayShort()}</div>
+      </td>
+      <td class="sig-block">
+        <div class="sig-line">Firma:</div>
+        <div><strong>${organizer || ''}</strong></div>
+        <div>DNI N° ${clientDni || ''}</div>
+        <div>Hz. ${todayShort()}</div>
+      </td>
+    </tr>
+  </table>
 
   <div class="footer-phones">Telf. Nos. ${brand.phones.join(' ó ')}</div>
 </body>
@@ -723,6 +754,7 @@ export function buildContractDocument(data) {
       promotionalIncludes: data.promotionalIncludes ?? [],
       promotionalExtras: data.promotionalExtras ?? [],
       extrasTerms: data.extrasTerms,
+      packageIncludeItems: data.packageIncludeItems,
     },
     'contract'
   );

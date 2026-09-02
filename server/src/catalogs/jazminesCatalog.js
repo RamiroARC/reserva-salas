@@ -9,8 +9,6 @@ export const JAZMINES = {
   year: 2026,
   extensionPerHour: 120,
   packageIncludes: [
-    'Pisco sour para el brindis',
-    'Chicha en jarra por mesa',
     'Local decorado por 08 horas',
     'Biombo, mesas con dos manteles y centro de flores naturales',
     'Menajería completa, sillón de reyna, alfombra',

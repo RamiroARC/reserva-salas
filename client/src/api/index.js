@@ -193,6 +193,35 @@ export async function deleteContractExtraTerm(id) {
   });
 }
 
+export async function fetchPackageIncludes() {
+  return request('/package-includes', {
+    fallbackError: 'No se pudieron cargar los ítems de Paquete incluye',
+  });
+}
+
+export async function createPackageIncludeItem(data) {
+  return request('/package-includes', {
+    method: 'POST',
+    body: data,
+    fallbackError: 'Error al crear ítem',
+  });
+}
+
+export async function updatePackageIncludeItem(id, data) {
+  return request(`/package-includes/${id}`, {
+    method: 'PUT',
+    body: data,
+    fallbackError: 'Error al actualizar ítem',
+  });
+}
+
+export async function deletePackageIncludeItem(id) {
+  return request(`/package-includes/${id}`, {
+    method: 'DELETE',
+    fallbackError: 'Error al eliminar ítem',
+  });
+}
+
 export async function fetchProjections(year) {
   return request(`/projections?year=${year}`, {
     fallbackError: 'No se pudieron cargar las proyecciones',

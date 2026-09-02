@@ -4,6 +4,7 @@ import { seedPromotionalOptionalItems } from '../catalogs/promotionalOptionalIte
 import { seedPromotionalPlatoFondo } from '../catalogs/promotionalPlatoFondoCatalog.js';
 import { seedDecorationColors } from '../catalogs/decorationColorsCatalog.js';
 import { seedDecorationThemeOptions } from '../catalogs/decorationThemeOptionsCatalog.js';
+import { seedPackageIncludes } from '../catalogs/packageIncludesCatalog.js';
 import { seedContractExtraTerms } from '../catalogs/contractExtraTermsCatalog.js';
 import { seedSeasonRates } from '../catalogs/seasonsCatalog.js';
 import { seedEventTypes } from '../catalogs/venue.js';
@@ -18,4 +19,5 @@ export async function seedLocalCatalogs(localId, localName = 'Local') {
   await seedDecorationColors(localId);
   await seedDecorationThemeOptions(localId);
   await seedContractExtraTerms(localId);
+  await seedPackageIncludes(localId);
 }
