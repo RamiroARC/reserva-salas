@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import {
   buildShareMessage,
   downloadBlob,
-  generatePdfBlobFromElement,
+  generatePdfBlobFromHtml,
   openFacebookShare,
   openGmailShare,
   openWhatsAppShare,
@@ -20,8 +20,6 @@ export default function DocumentPreview({ html, title, onClose }) {
       document.body.style.overflow = '';
     };
   }, []);
-
-  const getDocumentElement = () => iframeRef.current?.contentDocument?.body;
 
   const handlePrint = () => {
     const frame = iframeRef.current;
@@ -43,8 +41,7 @@ export default function DocumentPreview({ html, title, onClose }) {
   };
 
   const runShareAction = async (action) => {
-    const element = getDocumentElement();
-    if (!element) return;
+    if (!html?.trim()) return;
 
     setBusy(action);
     try {
@@ -52,12 +49,12 @@ export default function DocumentPreview({ html, title, onClose }) {
       const filename = `${sanitizeDocumentFilename(title)}.pdf`;
 
       if (action === 'pdf') {
-        const blob = await generatePdfBlobFromElement(element, filename);
+        const blob = await generatePdfBlobFromHtml(html, filename);
         downloadBlob(blob, filename);
         return;
       }
 
-      const { file, canNativeShare } = await prepareDocumentPdf(element, title);
+      const { file, canNativeShare } = await prepareDocumentPdf(html, title);
       const body = `${message}\n\nSi el PDF no se adjuntó automáticamente, use el archivo descargado en su equipo.`;
 
       if (action === 'native' && canNativeShare) {

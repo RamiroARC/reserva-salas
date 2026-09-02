@@ -84,8 +84,11 @@ function jazminesPrintStyles() {
       line-height: 1.35;
       color: #000;
       padding: 18px 22px;
+      width: 210mm;
       max-width: 210mm;
       margin: 0 auto;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
     .title {
       text-align: center;
@@ -106,10 +109,15 @@ function jazminesPrintStyles() {
     .fill--wide { min-width: 280px; }
     .fill--short { min-width: 60px; }
     .row-2 {
-      display: flex;
-      justify-content: space-between;
-      gap: 16px;
-      flex-wrap: wrap;
+      display: table;
+      width: 100%;
+      table-layout: fixed;
+      margin-bottom: 6px;
+    }
+    .row-2 > span {
+      display: table-cell;
+      vertical-align: top;
+      padding-right: 12px;
     }
     .menu-grid {
       display: grid;
@@ -150,12 +158,20 @@ function jazminesPrintStyles() {
     }
     .payments span { margin-right: 24px; }
     .signatures {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 40px;
+      display: table;
+      width: 100%;
+      table-layout: fixed;
       margin-top: 28px;
+      page-break-inside: avoid;
     }
-    .sig-block { text-align: center; font-size: 10px; }
+    .sig-block {
+      display: table-cell;
+      width: 50%;
+      text-align: center;
+      font-size: 10px;
+      vertical-align: top;
+      padding: 0 20px;
+    }
     .sig-line {
       border-top: 1px solid #000;
       margin: 40px 0 6px;
@@ -171,11 +187,12 @@ function jazminesPrintStyles() {
       margin: 8px 0 10px;
     }
     .contract-menu-item {
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
+      display: table;
+      width: 100%;
+      table-layout: fixed;
       margin-bottom: 5px;
       padding-left: 8px;
+      page-break-inside: avoid;
     }
     .contract-menu-section-title {
       padding-left: 8px;
@@ -184,19 +201,26 @@ function jazminesPrintStyles() {
       text-decoration: underline;
     }
     .contract-menu-item__label {
-      flex: 0 0 118px;
-    }
-    .contract-menu-item__content {
-      flex: 1 1 auto;
-      min-width: 0;
+      display: table-cell;
+      width: 118px;
+      vertical-align: top;
       padding-right: 8px;
     }
+    .contract-menu-item__content {
+      display: table-cell;
+      vertical-align: top;
+      padding-right: 8px;
+      word-break: break-word;
+    }
     .contract-menu-item__amount {
-      flex: 0 0 178px;
+      display: table-cell;
+      width: 178px;
+      vertical-align: top;
       text-align: right;
       font-weight: bold;
       font-size: 10px;
       line-height: 1.35;
+      white-space: nowrap;
     }
     .contract-menu-block .section-title {
       padding-left: 8px;
