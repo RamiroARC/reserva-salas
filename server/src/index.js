@@ -1,3 +1,4 @@
+import './loadEnv.js'; // Carga .env de la raíz antes que cualquier otro módulo
 import express from 'express';
 import cors from 'cors';
 import { cookieParser } from './middleware/cookies.js';
